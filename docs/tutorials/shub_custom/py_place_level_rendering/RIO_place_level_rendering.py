@@ -63,7 +63,8 @@ if __name__=='__main__':
     on_ada = True
 
     pose_file_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
-    pose_file_dir_ada = "/data/RIO10_data/scene01/seq01/seq01_01/"
+    ada_prefix = "/scratch/saishubodh/" 
+    pose_file_dir_ada = ada_prefix+ "RIO10_data/scene01/seq01/seq01_01/"
     if on_ada == True:
         pose_file_dir = pose_file_dir_ada
 
@@ -99,7 +100,7 @@ if __name__=='__main__':
     # CURRENTLY CODING
 
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
-    mesh_dir_ada = "/data/RIO10_data/scene01/seq01/seq01_01/"
+    mesh_dir_ada = ada_prefix+ "RIO10_data/scene01/seq01/seq01_01/"
     if on_ada == True:
         mesh_dir = mesh_dir_ada
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
