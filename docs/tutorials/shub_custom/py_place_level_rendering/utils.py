@@ -34,12 +34,11 @@ def load_view_point(pcd, img_size, param):
     return image
 
 
-def synthesize_img_given_viewpoint(pcd, K, extrinsics, save=False):
-    H = 1200
-    W = 1600
-    #print("K")
-    #print(K)
+def synthesize_img_given_viewpoint(pcd, K, extrinsics, H=1200,W=1600,  save=False):
+    # print(np.asarray(pcd.colors))
+    print(f"H: {H}, W: {W}, \n K:\n{K}, \n extrinsics:\n{extrinsics}")
     xyz = np.asarray(pcd.points)
+    print(f"Input pcd has no of points{xyz.shape}")
 
     rvecs = np.zeros(3)
     cv2.Rodrigues(extrinsics[0:3,0:3], rvecs)
