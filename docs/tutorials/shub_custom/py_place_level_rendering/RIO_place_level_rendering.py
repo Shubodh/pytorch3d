@@ -60,8 +60,13 @@ def parse_pose_file(pose_file, param):
 if __name__=='__main__':
     sample_path = "../sample_data"
 #Ensure camera_file, pose_file, and rgb_file are set correctly and exist for further cells to work
+    on_ada = True
 
     pose_file_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
+    pose_file_dir_ada = "/data/RIO10_data/scene01/seq01/seq01_01/"
+    if on_ada == True:
+        pose_file_dir = pose_file_dir_ada
+
     camera_file = os.path.join(pose_file_dir, 'camera.yaml')
 
     #change file num: 
@@ -80,8 +85,8 @@ if __name__=='__main__':
     print(pose_file, os.path.isfile(pose_file))
     print(rgb_file, os.path.isfile(rgb_file))
     img = plt.imread(rgb_file)
-    #plt.imshow(img)
-    #plt.show()
+    plt.imshow(img)
+    plt.show()
 
     # os.path.isfile(camera_file)
     # os.listdir(mesh_file_sample)
@@ -94,6 +99,9 @@ if __name__=='__main__':
     # CURRENTLY CODING
 
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
+    mesh_dir_ada = "/data/RIO10_data/scene01/seq01/seq01_01/"
+    if on_ada == True:
+        mesh_dir = mesh_dir_ada
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
     # pcd_RIO = mesh_RIO.sample_points_uniformly(number_of_points=50000)
 
