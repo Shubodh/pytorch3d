@@ -85,7 +85,7 @@ def parse_pose_file(pose_file, param):
 if __name__=='__main__':
     sample_path = "../sample_data"
 #Ensure camera_file, pose_file, and rgb_file are set correctly and exist for further cells to work
-    on_ada = True
+    on_ada = False 
 
     pose_file_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
     ada_prefix = "/scratch/saishubodh/" 

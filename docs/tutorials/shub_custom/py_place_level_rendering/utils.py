@@ -7,6 +7,7 @@ import cv2
 from pathlib import Path
 import matplotlib.pyplot as plt
 import yaml
+import copy
 
 def load_pcd_mat(filename):
     # For loading files like 'sample/DUC_cutout_005_0_0.jpg.mat'
@@ -27,6 +28,25 @@ def load_view_point(pcd, img_size, param):
     ctr = vis.get_view_control()
 #     print(param.intrinsic)
     vis.add_geometry(pcd)
+
+    # print(, param.extrinsic[1,3],param.extrinsic[2,3])
+    RT_wtoc = param.extrinsic
+    RT_ctow = np.zeros((RT_wtoc.shape))
+    RT_ctow[0:3,0:3] = RT_wtoc[0:3,0:3].T
+    RT_ctow[0:3,3] = - RT_wtoc[0:3,0:3].T @ RT_wtoc[0:3,3]
+    print(f"RT_ctow: {RT_ctow}")
+    coord_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
+    vis.add_geometry(coord_mesh)
+    # coord_pcd =  coord_mesh.sample_points_uniformly(number_of_points=500)
+
+    new_coord_mesh_r = copy.deepcopy(coord_mesh).rotate(RT_ctow[0:3,0:3], center=(0, 0, 0))
+    final_coord = copy.deepcopy(new_coord_mesh_r).translate(RT_ctow[0:3,3])
+    print(f'Center of mesh coord: {coord_mesh.get_center()}')
+    # mesh_tx = copy.deepcopy(coord_mesh).translate((1.3, 0, 0))
+    # coord_mesh_t = copy.deepcopy(coord_mesh).transform(RT_ctow)
+    vis.add_geometry(final_coord)
+
+
     ctr.convert_from_pinhole_camera_parameters(param, allow_arbitrary=True)
     vis.run()
     image = vis.capture_screen_float_buffer()
@@ -36,7 +56,7 @@ def load_view_point(pcd, img_size, param):
 
 def synthesize_img_given_viewpoint(pcd, K, extrinsics, H=1200,W=1600,  save=False):
     # print(np.asarray(pcd.colors))
-    print(f"H: {H}, W: {W}, \n K:\n{K}, \n extrinsics:\n{extrinsics}")
+    print(f"H: {H}, W: {W}, \n K:\n{K}, \n extrinsics w to c:\n{extrinsics}")
     xyz = np.asarray(pcd.points)
     print(f"Input pcd has no of points{xyz.shape}")
 
