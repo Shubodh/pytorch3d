@@ -41,7 +41,7 @@ def load_view_point(pcd, img_size, param):
 
     new_coord_mesh_r = copy.deepcopy(coord_mesh).rotate(RT_ctow[0:3,0:3], center=(0, 0, 0))
     final_coord = copy.deepcopy(new_coord_mesh_r).translate(RT_ctow[0:3,3])
-    print(f'Center of mesh coord: {coord_mesh.get_center()}')
+    print(f'Center of input mesh : {pcd.get_center()}')
     # mesh_tx = copy.deepcopy(coord_mesh).translate((1.3, 0, 0))
     # coord_mesh_t = copy.deepcopy(coord_mesh).transform(RT_ctow)
     vis.add_geometry(final_coord)
