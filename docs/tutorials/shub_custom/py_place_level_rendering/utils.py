@@ -9,6 +9,78 @@ import matplotlib.pyplot as plt
 import yaml
 import copy
 
+
+def pcd_from_mesh(mesh):
+    print(mesh.has_textures(), mesh.has_vertex_colors(), np.asarray(mesh.vertex_colors))
+    print("This has issues: vertex_colors is None. Don't get confused, textures is not same as vertex_colors")
+    print("For ex, .ply has colors but no textures. .obj has textures but no colors.")
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = mesh.vertices #Try sampling later instead (either sample or poisson)
+    pcd.colors = mesh.vertex_colors
+    pcd.normals = mesh.vertex_normals
+
+    print("Even the below sampling method cannot convert the textures to colored pcd. viz to verify.")
+    pcd_RIO = mesh.sample_points_uniformly(number_of_points=50000)
+    
+    return pcd
+
+def parse_pose_file_RIO(pose_file, param):
+    #Reading the pose file
+    with open(pose_file,'r') as f:
+        pose_lines = f.readlines()
+    # for row in pose_lines:
+    #     print(row)
+    pose_lines = [line.strip() for line in pose_lines]
+    pose_lines = [line.split(' ') for line in pose_lines]
+    pose_vals = [float(i) for line in pose_lines for i in line]
+    RT_mat = np.array(pose_vals)
+    RT_ctow = RT_mat.reshape((4,4))
+    # NOTE: This RT is from  camera coordinate system to the world coordinate 
+    # We want world to camera
+
+    RT_wtoc = np.zeros((RT_ctow.shape))
+    RT_wtoc[0:3,0:3] = RT_ctow[0:3,0:3].T
+    RT_wtoc[0:3,3] = - RT_ctow[0:3,0:3].T @ RT_ctow[0:3,3]
+
+    # print("DEBUG")
+    # print(RT, RT_wtoc)
+    RT_final = RT_wtoc
+
+    param.extrinsic = RT_final 
+    # print(param.extrinsic)
+    return param, RT_final, RT_ctow
+
+
+
+def parse_camera_file_RIO(camera_file):
+    with open(camera_file, 'r') as f:
+        yaml_file = yaml.load(f, Loader=yaml.FullLoader)
+        
+    intrinsics = yaml_file['camera_intrinsics']
+    img_size = (intrinsics['height'],intrinsics['width']) #H,W
+    model = intrinsics['model']
+    K = np.zeros((3,3))
+    K[0,0] = model[0]
+    K[1,1] = model[1]
+    K[0,2] = model[2]
+    K[1,2] = model[3]
+    K[2,2] = 1
+    # print("camera model:" ,model)
+    # print("img size", img_size)
+    # print(K)
+    #Set intrinsics here itself:
+    param = o3d.camera.PinholeCameraParameters()
+    intrinsic = param.intrinsic.set_intrinsics(width = img_size[1],
+                                                    height = img_size[0],
+                                                    fx = model[0],
+                                                    fy = model[1],
+                                                    cx = model[2],
+                                                    cy = model[3])
+    # param.intrinsic = intrinsic
+    # print(img_size)
+    #print(param.intrinsic.intrinsic_matrix)
+    return param, K, img_size
+
 def load_pcd_mat(filename):
     # For loading files like 'sample/DUC_cutout_005_0_0.jpg.mat'
     xyz_file  = loadmat(Path(filename))["XYZcut"]
