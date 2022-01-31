@@ -66,16 +66,18 @@ def o3dglobalframe_from_coords(coords=[0,0,0]):
     coord_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=[0, 0, 0], size=1)
 
     T = np.eye(4)
-    T[:3, :3] = coord_mesh.get_rotation_matrix_from_xyz((np.pi / 2, 0,  np.pi ))
+    # T[:3, :3] = coord_mesh.get_rotation_matrix_from_xyz((np.pi / 2, 0,  np.pi ))
+    T[:3, :3] = coord_mesh.get_rotation_matrix_from_xyz((np.pi / 2, -np.pi/4,  np.pi ))
     T[0:3,3] = coords
+    coord_mesh.transform(T)
+    # ## mesh_t = copy.deepcopy(coord_mesh).transform(T)
 
     # coord_mesh.translate(coords)
     # coord_mesh.rotate(R, center=coords)
-    mesh_t = copy.deepcopy(coord_mesh).transform(T)
 
     # coord_pcd =  coord_mesh.sample_points_uniformly(number_of_points=500)
     # o3d.visualization.draw_geometries([coord_mesh])
-    return mesh_t, T
+    return coord_mesh, np.linalg.inv(T)
 
 def viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
     # print(f"{centroids_coordinates.shape}")
@@ -101,7 +103,7 @@ def viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
 
 def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
     # print(centroids_coordinates[0], sphere_center_coords)
-    sample_poses =  np.linspace(centroids_coordinates[0], sphere_center_coords, num=5)
+    sample_poses =  np.linspace(centroids_coordinates[10], sphere_center_coords, num=5)
     # hi =(centroids_coordinates[0]+ sphere_center_coords ) /2
     # hii = (hi + sphere_center_coords)/2
     # hiii = (centroids_coordinates[0] + hi)/2
