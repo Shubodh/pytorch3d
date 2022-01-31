@@ -39,10 +39,10 @@ def find_centroid_coordinates(pcd, labels):
 
 def dbscan_clustering(pcd_hull):
 
-    with o3d.utility.VerbosityContextManager(
-            o3d.utility.VerbosityLevel.Debug) as cm:
-        labels = np.array(
-            pcd_hull.cluster_dbscan(eps=0.5, min_points=2, print_progress=True))
+    #with o3d.utility.VerbosityContextManager(
+    #        o3d.utility.VerbosityLevel.Debug) as cm:
+    labels = np.array(
+        pcd_hull.cluster_dbscan(eps=0.5, min_points=2, print_progress=True))
 
     max_label = labels.max()
     print(f"point cloud has {max_label + 1} clusters")
@@ -66,7 +66,7 @@ def o3dglobalframe_from_coords(coords=[0,0,0]):
     coord_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=[0, 0, 0], size=1)
 
     T = np.eye(4)
-    T[:3, :3] = mesh.get_rotation_matrix_from_xyz((np.pi / 2, 0,  np.pi ))
+    T[:3, :3] = coord_mesh.get_rotation_matrix_from_xyz((np.pi / 2, 0,  np.pi ))
     T[0:3,3] = coords
 
     # coord_mesh.translate(coords)
@@ -126,9 +126,13 @@ def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_cen
     # o3d.visualization.draw_geometries(poses_list)
     return final_tf_values
     
-
-if __name__ == '__main__':
+def poses_for_places():
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
+   
+    ada = True
+    if ada==True:
+        mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
+
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
     # o3d.visualization.draw_geometries([mesh])
 
@@ -143,5 +147,8 @@ if __name__ == '__main__':
 
     centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape)
     final_poses = find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords,mesh)
+    return final_poses
 
+if __name__ == '__main__':
+    final_poses = poses_for_places()
     print(final_poses)
