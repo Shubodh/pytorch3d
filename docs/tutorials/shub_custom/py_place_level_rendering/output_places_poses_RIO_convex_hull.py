@@ -101,7 +101,7 @@ def viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
     cents_list.extend([mesh, sphere_center])
     o3d.visualization.draw_geometries(cents_list)
 
-def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
+def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh, viz_pcd):
     # print(centroids_coordinates[0], sphere_center_coords)
     sample_poses =  np.linspace(centroids_coordinates[10], sphere_center_coords, num=5)
     # hi =(centroids_coordinates[0]+ sphere_center_coords ) /2
@@ -125,10 +125,11 @@ def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_cen
         final_tf_values.append(T)
     # poses_list=[]
     poses_list.extend([mesh, sphere_center, given])
-    # o3d.visualization.draw_geometries(poses_list)
+    if viz_pcd:
+        o3d.visualization.draw_geometries(poses_list)
     return final_tf_values
     
-def poses_for_places():
+def poses_for_places(viz_pcd=False):
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
    
     ada = True
@@ -145,12 +146,15 @@ def poses_for_places():
     pcd_hull_points = (np.asarray(pcd_hull.points))
     pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape)
     sphere_center_coords = np.mean(pcd_hull_points, axis=0)
-    # viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh)
+
+    if viz_pcd:
+        viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh)
 
     centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape)
-    final_poses = find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords,mesh)
+    final_poses = find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords,mesh, viz_pcd)
     return final_poses
 
 if __name__ == '__main__':
-    final_poses = poses_for_places()
+    viz_pcd = False
+    final_poses = poses_for_places(viz_pcd)
     print(final_poses)
