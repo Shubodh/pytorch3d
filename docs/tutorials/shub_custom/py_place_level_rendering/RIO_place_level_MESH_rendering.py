@@ -169,5 +169,5 @@ def main(img_ids, save_imgs):
 
 if __name__=='__main__':
     img_ids = [131, 1992, 3530, 3622]
-    save_imgs = True
+    save_imgs = False
     main(img_ids, save_imgs)
