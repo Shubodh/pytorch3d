@@ -96,6 +96,8 @@ def load_pcd_mat(filename):
 def load_view_point(pcd, img_size, param):
     vis = o3d.visualization.Visualizer()
     vis.create_window(height=img_size[0], width=img_size[1])
+    # vis.create_window()
+    print("img size:")
     print(img_size[0], img_size[1])
     ctr = vis.get_view_control()
 #     print(param.intrinsic)
@@ -120,8 +122,15 @@ def load_view_point(pcd, img_size, param):
 
 
     ctr.convert_from_pinhole_camera_parameters(param, allow_arbitrary=True)
+    print("loading viewpoint and saving: start")
     vis.run()
+    # filename="../sample_data/viz_img"
+    # vis.capture_screen_image(filename+".png")
+    #vis.capture_screen_image(filename+".png", do_render=True)
+    # print(f"visualizer image saved at {filename}.png")
+    print("loading viewpoint: end")
     image = vis.capture_screen_float_buffer()
+    print(np.asarray(image).shape)
     vis.destroy_window()
     return image
 

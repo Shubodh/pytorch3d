@@ -23,7 +23,7 @@ if __name__=='__main__':
     print(out_msg)
     sample_path = "../sample_data"
 #Ensure camera_file, pose_file, and rgb_file are set correctly and exist for further cells to work
-    on_ada = True
+    on_ada = False
 
     pose_file_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
     ada_prefix = "/scratch/saishubodh/" 
@@ -31,7 +31,7 @@ if __name__=='__main__':
     if on_ada == True:
         pose_file_dir = pose_file_dir_ada
 
-    camera_file = os.path.join(pose_file_dir, 'camera.yaml')
+    # camera_file = os.path.join(pose_file_dir, 'camera.yaml')
 
     #change file num: 
     #added format code, so just
@@ -56,9 +56,9 @@ if __name__=='__main__':
     # os.listdir(mesh_file_sample)
 
     #camera parsing
-    param, K, img_size = parse_camera_file(camera_file)
+    param, K, img_size = parse_camera_file_RIO(camera_file)
     H, W = img_size
-    param, RT = parse_pose_file(pose_file, param)
+    param, RT, _ = parse_pose_file_RIO(pose_file, param)
     
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
     mesh_dir_ada = ada_prefix+ "RIO10_data/scene01/seq01/seq01_01/"
@@ -73,13 +73,13 @@ if __name__=='__main__':
     # o3d.visualization.draw_geometries([mesh])
     # print(pcd)
     # o3d.visualization.draw_geometries([pcd])
-    # img_viz = load_view_point(mesh, img_size, param)
+    img_viz = load_view_point(mesh, img_size, param)
 
     #img_synth = synthesize_img_given_viewpoint(pcd, K, RT, H, W)
     
 
-    #load_view_point(mesh, img_size, param)
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(img)
-    #ax2.imshow(img_synth)
-    plt.show()
+    # #load_view_point(mesh, img_size, param)
+    # fig, (ax1, ax2) = plt.subplots(1, 2)
+    # ax1.imshow(img)
+    # #ax2.imshow(img_synth)
+    # plt.show()
