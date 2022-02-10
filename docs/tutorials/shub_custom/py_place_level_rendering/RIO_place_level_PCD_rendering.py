@@ -73,9 +73,11 @@ if __name__=='__main__':
     # o3d.visualization.draw_geometries([mesh])
     # print(pcd)
     # o3d.visualization.draw_geometries([pcd])
-    img_viz = load_view_point(mesh, img_size, param)
+    # img_viz = load_view_point(mesh, img_size, param)
 
-    #img_synth = synthesize_img_given_viewpoint(pcd, K, RT, H, W)
+    H, W = 240, 135
+    print(H, W)
+    img_synth = synthesize_img_given_viewpoint(pcd, K, RT, H, W, save=True)
     
 
     # #load_view_point(mesh, img_size, param)

@@ -76,7 +76,7 @@ def parse_camera_file_RIO(camera_file):
                                                     fy = model[1],
                                                     cx = model[2],
                                                     cy = model[3])
-    # param.intrinsic = intrinsic
+    param.intrinsic = intrinsic
     # print(img_size)
     #print(param.intrinsic.intrinsic_matrix)
     return param, K, img_size
@@ -213,9 +213,9 @@ def synthesize_img_given_viewpoint(pcd, K, extrinsics, H=1200,W=1600,  save=Fals
 
 
     img = o3d.geometry.Image((synth_img).astype(np.uint8))
-    #o3d.visualization.draw_geometries([img])
+    o3d.visualization.draw_geometries([img])
     if save:
-        img_dest = os.path.join("sample_data", "synth_image_inloc.png")
+        img_dest = os.path.join("../sample_data", "synth_image_inloc.png")
         o3d.io.write_image(img_dest, img)
         print(f"image written to {img_dest}")
     return img
