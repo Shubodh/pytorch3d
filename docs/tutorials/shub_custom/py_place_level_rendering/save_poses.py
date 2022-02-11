@@ -267,7 +267,7 @@ def save_poses(mesh_dir, camera_dir, dest_dir,sequence_num, filename=None):
         filename = os.path.join(dest_dir, sequence_num + '.txt')
 
     save_to_file(filename, sequence_num, list_of_rts)
-    verify_file(mesh, camera, filename)
+    # verify_file(mesh, camera, filename)
 
 
 
@@ -282,11 +282,22 @@ if __name__ == '__main__':
     sequence number for which you want to save poses
     destination directory to save.
     """
+    viz_pcd = False
+    custom_dir = False
 
     #Reading data paths
-    #To edit:
-    mesh_dir = "../../../../../scene01/models01/"
-    camera_dir = "../../../../../scene01/seq01/"
+    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
+    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
+   
+    ada = not viz_pcd
+    if ada==True:
+        mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
+        camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
+
+    if custom_dir:
+        mesh_dir = "../../../../../scene01/models01/"
+        camera_dir = "../../../../../scene01/seq01/"
+
     #Sequence number and where visualisations are saved:
     # MAKE SURE IT IS SAVE WITHOUT '/'
     sequence_num = 'seq01_01'
