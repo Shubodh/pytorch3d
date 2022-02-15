@@ -237,7 +237,7 @@ def main_depth(img_ids, save_imgs):
             lights = lights_given_position(RT_wtoc[0:3, 3], device)
             rasterizer=MeshRasterizer(
                     cameras=cameras_pytorch3d, 
-                    raster_settings=raster_settings,
+                    raster_settings=raster_settings
             )
             renderer = MeshRenderer(
                 rasterizer=rasterizer,
@@ -247,6 +247,7 @@ def main_depth(img_ids, save_imgs):
                     lights=lights
                 )
             )
+            print("Test")
 
 
             rendered_images = renderer(mesh)
@@ -276,11 +277,11 @@ def main_depth(img_ids, save_imgs):
 
 
             #img_type = "_true-pose-ctow"
-            img_type = "_random-pose-wtoc"
+            img_type = "depth_stuff"
             if save_imgs:
                 plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
                 print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
-            plt.show()
+            #plt.show()
 
 
 
@@ -385,8 +386,8 @@ def main_given_poses(given_poses, save_imgs):
 if __name__=='__main__':
     # img_ids = [131, 1992, 3530, 3622]
     img_ids = [131]
-    save_imgs = False
+    save_imgs = True
     given_poses = poses_for_places()
     # print(given_poses)
-    # main(img_ids, save_imgs, given_poses)
-    main_given_poses(given_poses, save_imgs)
+    main_depth(img_ids, save_imgs)
+    #main_given_poses(given_poses, save_imgs)
