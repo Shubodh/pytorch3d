@@ -17,7 +17,7 @@ from scipy.spatial.transform import Rotation as R
 # %matplotlib inline
 
 # Custom utils functions
-from pytorch3d_utils import render_py3d_img
+# from pytorch3d_utils import render_py3d_img
 from tf_camera_helper import convert_w_t_c, camera_params
 from places_creation import convex_hull, dbscan_clustering, rt_given_lookat
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
