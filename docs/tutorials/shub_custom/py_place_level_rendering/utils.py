@@ -105,7 +105,8 @@ def load_view_point(pcd, img_size, param):
 
     # print(, param.extrinsic[1,3],param.extrinsic[2,3])
     RT_wtoc = param.extrinsic
-    RT_ctow = np.zeros((RT_wtoc.shape))
+    # RT_ctow = np.zeros((RT_wtoc.shape))
+    RT_ctow = np.copy(RT_wtoc)
     RT_ctow[0:3,0:3] = RT_wtoc[0:3,0:3].T
     RT_ctow[0:3,3] = - RT_wtoc[0:3,0:3].T @ RT_wtoc[0:3,3]
     print(f"RT_ctow: {RT_ctow}")
