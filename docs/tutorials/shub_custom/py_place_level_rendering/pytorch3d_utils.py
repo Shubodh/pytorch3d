@@ -45,7 +45,7 @@ from pytorch3d.renderer import (
 from pytorch3d.utils import cameras_from_opencv_projection
 
 # Custom utils functions
-from tf_helper import convert_w_t_c
+from tf_camera_helper import convert_w_t_c
 
 
 def RtK_in_torch_format(K, RT, img_size):
