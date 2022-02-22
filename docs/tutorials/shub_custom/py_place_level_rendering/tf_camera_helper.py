@@ -5,8 +5,12 @@ import yaml
 
 def convert_w_t_c(RT_ctow):
     """
-    input RT is transform from camera to world
-    o3d requires world to camera
+    This is actually nothing but inverse transform. But for sake of clarity for our application,
+    keeping its name w_to_c.
+
+    input RT is transform from camera to world: i.e. robot poses.
+    output: o3d visualizer requires pinhole camera parameters, which is naturally
+    world to camera (standard projection equation). See load_view_point in o3d_helper.py for more details.
     """
     RT_wtoc = np.zeros((RT_ctow.shape))
     RT_wtoc[0:3,0:3] = RT_ctow[0:3,0:3].T

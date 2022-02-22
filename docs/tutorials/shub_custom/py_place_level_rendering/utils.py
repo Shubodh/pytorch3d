@@ -25,6 +25,9 @@ def pcd_from_mesh(mesh):
     return pcd
 
 def parse_pose_file_RIO(pose_file, param):
+    # NOTE: In RIO pose files, convention is: camera to world. Obviously, it is pose of a robot,
+    # so obviously it has to be (a camera) in world frame.
+    # We want world to camera as our points are in world coordinates.
     #Reading the pose file
     with open(pose_file,'r') as f:
         pose_lines = f.readlines()

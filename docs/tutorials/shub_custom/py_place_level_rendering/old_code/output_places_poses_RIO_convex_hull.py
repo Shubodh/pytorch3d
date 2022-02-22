@@ -102,6 +102,8 @@ def viz_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh):
     o3d.visualization.draw_geometries(cents_list)
 
 def find_final_poses_from_centroids_and_center(centroids_coordinates, sphere_center_coords, mesh, viz_pcd):
+    # This function is not written well (the way it extracts tf is confusing. So look at current *main*.py functions instead.)
+
     # print(centroids_coordinates[0], sphere_center_coords)
     sample_poses =  np.linspace(centroids_coordinates[10], sphere_center_coords, num=5)
     # hi =(centroids_coordinates[0]+ sphere_center_coords ) /2
