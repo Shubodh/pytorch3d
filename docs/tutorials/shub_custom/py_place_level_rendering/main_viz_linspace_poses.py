@@ -18,36 +18,25 @@ from places_creation import convex_hull, dbscan_clustering, rt_given_lookat
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords, create_o3d_param_and_viz_image
 
 
-def load_view_point(pcd, img_size, param):
-    vis = o3d.visualization.Visualizer()
-    vis.create_window(height=img_size[0], width=img_size[1])
-    print(img_size[0], img_size[1])
-    ctr = vis.get_view_control()
-    vis.add_geometry(pcd)
-    ctr.convert_from_pinhole_camera_parameters(param, allow_arbitrary=True)
-    vis.run()
-    image = vis.capture_screen_float_buffer()
-    vis.destroy_window()
-    return image
 
-def viz_image(mesh, RT, camera):
-    model = camera.model
-    img_size = camera.img_size
-    param = o3d.camera.PinholeCameraParameters()
-    param.intrinsic.set_intrinsics(width = img_size[1],
-                                                height = img_size[0],
-                                                fx = model[0],
-                                                fy = model[1],
-                                                cx = model[2],
-                                                cy = model[3])
+# def create_o3d_param_and_viz_image(mesh, RT, camera):
+#     model = camera.model
+#     img_size = camera.img_size
+#     param = o3d.camera.PinholeCameraParameters()
+#     param.intrinsic.set_intrinsics(width = img_size[1],
+#                                                 height = img_size[0],
+#                                                 fx = model[0],
+#                                                 fy = model[1],
+#                                                 cx = model[2],
+#                                                 cy = model[3])
 
-    param.extrinsic = convert_w_t_c(RT)
-    load_view_point(mesh, img_size, param)
+    # NOTE THIS LINE: different from create_o3d_param_and_viz_image you're importing
+#     param.extrinsic = convert_w_t_c(RT)
+#     load_view_point(mesh, img_size, param)
     
 
-
-
-def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
+# def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
+def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
     # Visualise for particular centroid
     # in this case we will visualise for
     # number 10
@@ -83,17 +72,17 @@ def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, c
     if viz_pcd:
         o3d.visualization.draw_geometries(poses_list)
 
-    viz_image(mesh, RT, camera)
+    RT_wtoc = convert_w_t_c(RT)
+    create_o3d_param_and_viz_image(mesh, RT_wtoc, camera)
     
     #if we want other way round
     RT = rt_given_lookat(sphere_center_coords, centroids_coordinates[test_num])
-    viz_image(mesh, RT, camera)
+    RT_wtoc = convert_w_t_c(RT)
+    create_o3d_param_and_viz_image(mesh, RT_wtoc, camera)
     return 
 
-
-    
-
-def synth_image(viz_pcd=False, custom_dir=False):
+# def synth_image(viz_pcd=False, custom_dir=False):
+def main_linspace_poses(viz_pcd=False, custom_dir=False):
     #Reading data paths
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
     camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
@@ -122,7 +111,7 @@ def synth_image(viz_pcd=False, custom_dir=False):
 
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
-    viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
+    viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
 
 
 if __name__ == '__main__':
@@ -137,4 +126,4 @@ if __name__ == '__main__':
     """
     viz_pcd = True
     # final_poses = poses_for_places(viz_pcd, True)
-    synth_image(viz_pcd, True)
+    main_linspace_poses(viz_pcd=viz_pcd, custom_dir=False)
