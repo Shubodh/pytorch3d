@@ -79,8 +79,66 @@ def lights_given_position(position, device):
 # %matplotlib inline
 # def render_py3d_img(img_size, param, dest_file, mesh_dir, device):
 def render_py3d_img(img_size, param, dest_file, mesh_dir, device = None):
+    """
+    Given: camera params (both int and ext, img_size), mesh_parent_path
+    Output: Renders image using py3d renderer. Saves image using plt.imsave(dest_file, rendered_image)
+    """
     K = param.intrinsic.intrinsic_matrix
     RT = param.extrinsic
+    RT_wtoc = RT
+    RT_ctow = convert_w_t_c(RT_wtoc) #Here input RT is actually wtoc, output RT is ctow. Using this function as inverse and NOT as per how variables are written inside that function.
+    # print(K, RT)
+
+    mesh_obj_file = os.path.join(mesh_dir, 'mesh.obj')
+    print("Testing IO for meshes ...")
+    if device is not None:
+        mesh = load_objs_as_meshes([mesh_obj_file], device=device)
+    else:
+        mesh = load_objs_as_meshes([mesh_obj_file])
+    print("Mesh loading done !!!")
+    texture_image=mesh.textures.maps_padded()
+    # plt.figure(figsize=(7,7))
+    # plt.imshow(texture_image.squeeze().cpu().numpy())
+    # plt.show()
+    RR, tt, KK, img_size_t = RtK_in_torch_format(K, RT, img_size)
+    # print(RR)
+    cameras_pytorch3d = cameras_from_opencv_projection(RR.float(), tt.float(), KK.float(), img_size_t.float())
+    if device is not None:
+        cameras_pytorch3d  = cameras_pytorch3d.to(device)
+
+    raster_settings = RasterizationSettings(
+                image_size=img_size, 
+                blur_radius=0.0, 
+                faces_per_pixel=1, 
+            )
+    if device is not None:
+        lights = lights_given_position(RT_ctow[0:3, 3], device)
+        
+    renderer = MeshRenderer(
+                rasterizer=MeshRasterizer(
+                    cameras=cameras_pytorch3d, 
+                    raster_settings=raster_settings
+                ),
+                shader=SoftPhongShader(
+                    device=device,
+                    cameras=cameras_pytorch3d,
+                    lights=lights
+                )
+            )
+    rendered_images = renderer(mesh)
+    rendered_image = rendered_images[0, ..., :3].cpu().numpy()
+
+    plt.imsave(dest_file, rendered_image)
+
+def render_py3d_img_and_depth(img_size, param, dest_file, mesh_dir, device = None):
+    """
+    Given: camera params (both int and ext, img_size), mesh_parent_path
+    Output: Renders RGB AND DEPTH using py3d renderer. Saves image using plt.imsave(dest_file, rendered_image)
+    """
+    K = param.intrinsic.intrinsic_matrix
+    RT = param.extrinsic
+    RT_wtoc = RT
+    RT_ctow = convert_w_t_c(RT_wtoc) #Here input RT is actually wtoc, output RT is ctow. Using this function as inverse and NOT as per how variables are written inside that function.
     # print(K, RT)
 
     mesh_obj_file = os.path.join(mesh_dir, 'mesh.obj')
@@ -106,23 +164,49 @@ def render_py3d_img(img_size, param, dest_file, mesh_dir, device = None):
                 faces_per_pixel=1, 
             )
     # lights = lights_given_position(RT_wtoc[0:3, 3], device
-    print("TODO2: Change RT variable explicitly to wtoc or ctow")
-    RT = convert_w_t_c(RT)
     if device is not None:
-        lights = lights_given_position(RT[0:3, 3], device)
+        lights = lights_given_position(RT_ctow[0:3, 3], device)
         
+    rasterizer=MeshRasterizer(
+            cameras=cameras_pytorch3d, 
+            raster_settings=raster_settings
+    )
     renderer = MeshRenderer(
-                rasterizer=MeshRasterizer(
-                    cameras=cameras_pytorch3d, 
-                    raster_settings=raster_settings
-                ),
-                shader=SoftPhongShader(
-                    device=device,
-                    cameras=cameras_pytorch3d,
-                    lights=lights
-                )
-            )
+        rasterizer=rasterizer,
+        shader=SoftPhongShader(
+            device=device,
+            cameras=cameras_pytorch3d,
+            lights=lights
+        )
+    )
+
+    # 1. SAVING RGB IMAGE
     rendered_images = renderer(mesh)
     rendered_image = rendered_images[0, ..., :3].cpu().numpy()
 
     plt.imsave(dest_file, rendered_image)
+
+    # 2. SAVING DEPTH IMAGE
+    # DEPTH EXPERIMENT
+    fragments = rasterizer(mesh)
+    depth_info = fragments.zbuf
+    """
+    fragments.zbuf is a (N, H, W, K) dimensional tensor
+    #top k points. We'll take top 1
+    source: https://github.com/facebookresearch/pytorch3d/issues/35#issuecomment-583870676
+    """
+    depth_image = depth_info[0,...,0].cpu().numpy()
+
+    # given_img = plt.imread(given_rgb_file)
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.imshow(rendered_image)
+    ax2.imshow(depth_image)
+
+
+    #img_type = "_true-pose-ctow"
+    img_type = "rgb_depth_ctow" #"_true-pose-ctow"
+    # img_type = "depth_stuff_wtoc"
+    if save_imgs:
+        plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
+        print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
+    plt.show()

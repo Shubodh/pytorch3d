@@ -51,6 +51,7 @@ from output_places_poses_RIO_convex_hull import poses_for_places
 from pytorch3d_utils import RtK_in_torch_format, lights_given_position
 
 def main(img_ids, save_imgs):
+    #MOVED THIS to render_py3d_img in pytorch3d_utils.py. 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.cuda.set_device(device)
@@ -91,6 +92,9 @@ def main(img_ids, save_imgs):
             print(f"H & W: {img_size}, \n K:\n{K}, \n tf w to c:\n{RT} \n tf c to w:\n{RT_ctow} ")
 
             mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
+
+            #render_py3d_img(img_size, param, dest_file, mesh_dir, device)
+
             mesh_obj_file = os.path.join(mesh_dir ,"mesh.obj")
             print("Testing IO for meshes ...")
             mesh = load_objs_as_meshes([mesh_obj_file], device=device)
@@ -114,8 +118,8 @@ def main(img_ids, save_imgs):
                 faces_per_pixel=1, 
             )
 
-            #lights = lights_given_position(RT_ctow[0:3, 3], device)
-            lights = lights_given_position(RT_wtoc[0:3, 3], device)
+            lights = lights_given_position(RT_ctow[0:3, 3], device)
+            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
 
             renderer = MeshRenderer(
                 rasterizer=MeshRasterizer(
@@ -138,8 +142,8 @@ def main(img_ids, save_imgs):
             ax1.imshow(given_img)
             ax2.imshow(rendered_images[0, ..., :3].cpu().numpy())
 
-            #img_type = "_true-pose-ctow"
-            img_type = "_random-pose-wtoc"
+            img_type = "_true-pose-ctow"
+            # img_type = "_random-pose-wtoc"
             if save_imgs:
                 plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
                 print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
@@ -209,8 +213,8 @@ def main_depth(img_ids, save_imgs):
                 faces_per_pixel=1, 
             )
 
-            #lights = lights_given_position(RT_ctow[0:3, 3], device)
-            lights = lights_given_position(RT_wtoc[0:3, 3], device)
+            lights = lights_given_position(RT_ctow[0:3, 3], device)
+            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
             rasterizer=MeshRasterizer(
                     cameras=cameras_pytorch3d, 
                     raster_settings=raster_settings
@@ -253,7 +257,8 @@ def main_depth(img_ids, save_imgs):
 
 
             #img_type = "_true-pose-ctow"
-            img_type = "depth_stuff"
+            img_type = "depth_stuff_ctow"
+            # img_type = "depth_stuff_wtoc"
             if save_imgs:
                 plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
                 print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
@@ -327,8 +332,8 @@ def main_given_poses(given_poses, save_imgs):
                 faces_per_pixel=1, 
             )
 
-            #lights = lights_given_position(RT_ctow[0:3, 3], device)
-            lights = lights_given_position(RT_wtoc[0:3, 3], device)
+            lights = lights_given_position(RT_ctow[0:3, 3], device)
+            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
 
             renderer = MeshRenderer(
                 rasterizer=MeshRasterizer(
@@ -351,8 +356,8 @@ def main_given_poses(given_poses, save_imgs):
             # ax1.imshow(given_img)
             # ax2.imshow(rendered_images[0, ..., :3].cpu().numpy())
 
-            #img_type = "_true-pose-ctow"
-            img_type = "_random-pose-wtoc"
+            img_type = "_true-pose-ctow"
+            # img_type = "_random-pose-wtoc"
             if save_imgs:
                 plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
                 print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
@@ -365,5 +370,6 @@ if __name__=='__main__':
     save_imgs = True
     given_poses = poses_for_places()
     # print(given_poses)
+    main(img_ids, save_imgs)
     main_depth(img_ids, save_imgs)
     #main_given_poses(given_poses, save_imgs)

@@ -8,6 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import yaml
 import copy
+import sys
 
 
 def pcd_from_mesh(mesh):
@@ -73,15 +74,22 @@ def parse_camera_file_RIO(camera_file):
     # print(K)
     #Set intrinsics here itself:
     param = o3d.camera.PinholeCameraParameters()
-    intrinsic = param.intrinsic.set_intrinsics(width = img_size[1],
-                                                    height = img_size[0],
-                                                    fx = model[0],
-                                                    fy = model[1],
-                                                    cx = model[2],
-                                                    cy = model[3])
-    param.intrinsic = intrinsic
-    # print(img_size)
-    #print(param.intrinsic.intrinsic_matrix)
+    param.intrinsic.set_intrinsics(width = img_size[1],
+                                        height = img_size[0],
+                                        fx = model[0],
+                                        fy = model[1],
+                                        cx = model[2],
+                                        cy = model[3])
+    #intrinsic = param.intrinsic.set_intrinsics(width = img_size[1],
+    #                                                height = img_size[0],
+    #                                                fx = model[0],
+    #                                                fy = model[1],
+    #                                                cx = model[2],
+    #                                                cy = model[3])
+    ## param.intrinsic = intrinsic
+    ## print(img_size)
+    ##print(intrinsic)
+    ##print(param.intrinsic.intrinsic_matrix)
     return param, K, img_size
 
 def load_pcd_mat(filename):
