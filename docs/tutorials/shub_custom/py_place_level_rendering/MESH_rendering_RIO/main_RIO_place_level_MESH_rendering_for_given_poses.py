@@ -44,8 +44,8 @@ from pytorch3d.renderer import (
 
 from pytorch3d.utils import cameras_from_opencv_projection
 
-from utils import synthesize_img_given_viewpoint, load_pcd_mat, load_view_point, parse_camera_file_RIO, parse_pose_file_RIO
-from output_places_poses_RIO_convex_hull import poses_for_places
+from parsers import parse_camera_file_RIO, parse_pose_file_RIO
+#from old_code.output_places_poses_RIO_convex_hull import poses_for_places
 
 #New custom utils functions
 from pytorch3d_utils import RtK_in_torch_format, lights_given_position
@@ -368,7 +368,7 @@ if __name__=='__main__':
     # img_ids = [131, 1992, 3530, 3622]
     img_ids = [131]
     save_imgs = True
-    given_poses = poses_for_places()
+    # given_poses = poses_for_places()
     # print(given_poses)
 
     # 1. Rendering images for given reference poses.
