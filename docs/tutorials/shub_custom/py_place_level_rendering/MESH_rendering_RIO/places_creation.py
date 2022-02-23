@@ -4,18 +4,26 @@ import matplotlib.pyplot as plt
 
 #def create_rt(lookat,location):
 def rt_given_lookat(lookat,location):
-    print("TODO5: I think Rotation should be transpose of what it is. Check visually.")
+    """
+    Input: 1. lookat like sphere_center i.e. center of room, 2. your current location from where you are looking
+    Both are positions.
+
+    Output: This outputs poses in ctow format, obvious choice because
+    any robot poses are naturally in ctow format. 
+
+    See Notion for full clarity: https://www.notion.so/saishubodh/Personal-notes-ALL-coordinate-frame-conventions-Habitat-Notebook-InLoc-RIO10-Pytorch3d-Common--01ac85553c324a06a63b1821be1a463f#ea75fd7aa6394cf2b06d1e10d75348ac
+    """
     z_axis = np.array(lookat) - np.array(location)
     z = z_axis/np.linalg.norm(z_axis)
     y = np.array([0,0,-1])
     x = np.cross(y,z)
-    RT = np.zeros((4,4))
-    RT[0:3,0] = x 
-    RT[0:3,1] = y 
-    RT[0:3,2] = z
-    RT[0:3,3] = np.array(location)
-    RT[3,3] = 1 
-    return RT 
+    RT_ctow = np.zeros((4,4))
+    RT_ctow[0:3,0] = x 
+    RT_ctow[0:3,1] = y 
+    RT_ctow[0:3,2] = z
+    RT_ctow[0:3,3] = np.array(location)
+    RT_ctow[3,3] = 1 
+    return RT_ctow 
 
 def convex_hull(mesh):
 

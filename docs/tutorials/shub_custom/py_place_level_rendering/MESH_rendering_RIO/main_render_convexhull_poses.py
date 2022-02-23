@@ -68,15 +68,17 @@ def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
     if not os.path.isdir(dest_dir):
         os.makedirs(dest_dir)
 
-    for i, RT in enumerate(RT_list):
-        print("TODO3: Lack of clarity on w_t_c. Rewrite the function as inverse_tf or something. It goes to render_ func and gets w_to_c'ed again")
-        param.extrinsic = convert_w_t_c(RT)
+    for i, RT_ctow in enumerate(RT_list):
+        # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
+        param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
         dest_file = '{:02d}'.format(i) + '.png'
         dest_file = os.path.join(dest_dir, dest_file)
         print(dest_file)
 
         # print(param.extrinsic, param.intrinsic.intrinsic_matrix, dest_file)
         # render_py3d_img(i, img_size, param, dest_file, mesh_dir, device)
+
+        # param.extrinsic is wtoc
         render_py3d_img_and_depth(i, img_size, param, dest_file, mesh_dir, device)
 
 #def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
