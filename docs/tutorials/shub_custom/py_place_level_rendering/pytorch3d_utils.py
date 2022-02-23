@@ -78,7 +78,7 @@ def lights_given_position(position, device):
 # import open3d as o3d
 # %matplotlib inline
 # def render_py3d_img(img_size, param, dest_file, mesh_dir, device):
-def render_py3d_img(img_size, param, dest_file, mesh_dir, device = None):
+def render_py3d_img(img_id, img_size, param, dest_file, mesh_dir, device = None):
     """
     Given: camera params (both int and ext, img_size), mesh_parent_path
     Output: Renders image using py3d renderer. Saves image using plt.imsave(dest_file, rendered_image)
@@ -128,9 +128,10 @@ def render_py3d_img(img_size, param, dest_file, mesh_dir, device = None):
     rendered_images = renderer(mesh)
     rendered_image = rendered_images[0, ..., :3].cpu().numpy()
 
+    print("Saving RGB rendered_image")
     plt.imsave(dest_file, rendered_image)
 
-def render_py3d_img_and_depth(img_size, param, dest_file, mesh_dir, device = None):
+def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, device = None):
     """
     Given: camera params (both int and ext, img_size), mesh_parent_path
     Output: Renders RGB AND DEPTH using py3d renderer. Saves image using plt.imsave(dest_file, rendered_image)
@@ -184,6 +185,7 @@ def render_py3d_img_and_depth(img_size, param, dest_file, mesh_dir, device = Non
     rendered_images = renderer(mesh)
     rendered_image = rendered_images[0, ..., :3].cpu().numpy()
 
+    print("Saving RGB rendered_image")
     plt.imsave(dest_file, rendered_image)
 
     # 2. SAVING DEPTH IMAGE
@@ -206,7 +208,9 @@ def render_py3d_img_and_depth(img_size, param, dest_file, mesh_dir, device = Non
     #img_type = "_true-pose-ctow"
     img_type = "rgb_depth_ctow" #"_true-pose-ctow"
     # img_type = "depth_stuff_wtoc"
+    save_imgs = True
     if save_imgs:
-        plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
-        print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
+        plt.savefig("temp_dir/" + str(img_id) + "_depth_fig.png")
+        print(f"img saved to temp_dir/{str(img_id)}_depth_fig.png")
+    print("Showing rendered depth image")
     plt.show()

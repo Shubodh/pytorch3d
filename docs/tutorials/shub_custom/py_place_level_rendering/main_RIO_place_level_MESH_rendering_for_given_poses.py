@@ -370,6 +370,13 @@ if __name__=='__main__':
     save_imgs = True
     given_poses = poses_for_places()
     # print(given_poses)
+
+    # 1. Rendering images for given reference poses.
+    # TODO-Later: Rewrite main() and main_depth() by importing rendering functions from pytorch3d_utils.py
+    # instead of having entire code in current file.
     main(img_ids, save_imgs)
     main_depth(img_ids, save_imgs)
+
+    # 2. Rendering images for convex hull poses. But 
+    # but this is random, not written well. Use main_RIO_place_level_MESH_rendering_for_convexhull_poses.py
     #main_given_poses(given_poses, save_imgs)

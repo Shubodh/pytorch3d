@@ -45,7 +45,7 @@ from pytorch3d.renderer import (
 from pytorch3d.utils import cameras_from_opencv_projection
 
 # Custom utils functions
-from pytorch3d_utils import render_py3d_img
+from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
 from tf_camera_helper import convert_w_t_c, camera_params
 from places_creation import convex_hull, dbscan_clustering, rt_given_lookat
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
@@ -76,7 +76,8 @@ def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
         print(dest_file)
 
         # print(param.extrinsic, param.intrinsic.intrinsic_matrix, dest_file)
-        render_py3d_img(img_size, param, dest_file, mesh_dir, device)
+        # render_py3d_img(i, img_size, param, dest_file, mesh_dir, device)
+        render_py3d_img_and_depth(i, img_size, param, dest_file, mesh_dir, device)
 
 #def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
 def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords):
