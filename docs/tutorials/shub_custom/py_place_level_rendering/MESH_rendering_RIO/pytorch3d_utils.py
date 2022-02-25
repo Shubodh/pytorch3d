@@ -46,6 +46,7 @@ from pytorch3d.utils import cameras_from_opencv_projection
 
 # Custom utils functions
 from tf_camera_helper import convert_w_t_c
+from io_helper import read_image, save_depth_image, read_depth_image_given_colorimg_path, read_depth_image_given_depth_path
 
 
 def RtK_in_torch_format(K, RT, img_size):
@@ -199,18 +200,22 @@ def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, devi
     """
     depth_image = depth_info[0,...,0].cpu().numpy()
 
-    # given_img = plt.imread(given_rgb_file)
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(rendered_image)
-    ax2.imshow(depth_image)
+    dest_path = Path(dest_file)
+    save_path = Path(str(dest_path.parents[0] / dest_path.stem) + "_depth.png")
+    save_depth_image(depth_image, save_path)
+    print("CURRENTLY HERE")
 
 
-    #img_type = "_true-pose-ctow"
-    img_type = "rgb_depth_ctow" #"_true-pose-ctow"
-    # img_type = "depth_stuff_wtoc"
-    save_imgs = True
-    if save_imgs:
-        plt.savefig("temp_dir/" + str(img_id) + "_depth_fig.png")
-        print(f"img saved to temp_dir/{str(img_id)}_depth_fig.png")
-    print("Showing rendered depth image")
-    plt.show()
+    viz = False
+    if viz == True:
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        ax1.imshow(rendered_image)
+        ax2.imshow(depth_image)
+
+        img_type = "rgb_depth_ctow" #"_true-pose-ctow"
+        save_imgs = True
+        if save_imgs:
+            plt.savefig("temp_dir/" + str(img_id) + "_depth_fig.png")
+            print(f"img saved to temp_dir/{str(img_id)}_depth_fig.png")
+        print("Showing rendered depth image")
+        plt.show()
