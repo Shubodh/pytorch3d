@@ -47,6 +47,7 @@ from pytorch3d.utils import cameras_from_opencv_projection
 # Custom utils functions
 from tf_camera_helper import convert_w_t_c
 from io_helper import read_image, save_depth_image, read_depth_image_given_colorimg_path, read_depth_image_given_depth_path
+from viz_helper import plot_images_simple
 
 
 def RtK_in_torch_format(K, RT, img_size):
@@ -132,10 +133,10 @@ def render_py3d_img(img_id, img_size, param, dest_file, mesh_dir, device = None)
     print("Saving RGB rendered_image")
     plt.imsave(dest_file, rendered_image)
 
-def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, device = None):
+def render_py3d_img_and_depth(img_id, img_size, param, dest_file_prefix, mesh_dir, device = None, viz_rgb_depth = False):
     """
     Given: camera params (both int and ext, img_size), mesh_parent_path
-    Output: Renders RGB AND DEPTH using py3d renderer. Saves image using plt.imsave(dest_file, rendered_image)
+    Output: Renders RGB AND DEPTH using py3d renderer. Saves image using plt.imsave(dest_file_prefix, rendered_image)
     """
     K = param.intrinsic.intrinsic_matrix
     RT = param.extrinsic
@@ -144,12 +145,11 @@ def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, devi
     # print(K, RT)
 
     mesh_obj_file = os.path.join(mesh_dir, 'mesh.obj')
-    print("Testing IO for meshes ...")
     if device is not None:
         mesh = load_objs_as_meshes([mesh_obj_file], device=device)
     else:
         mesh = load_objs_as_meshes([mesh_obj_file])
-    print("Mesh loading done !!!")
+    # print("Mesh loading done !!!")
     texture_image=mesh.textures.maps_padded()
     # plt.figure(figsize=(7,7))
     # plt.imshow(texture_image.squeeze().cpu().numpy())
@@ -184,13 +184,14 @@ def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, devi
 
     # 1. SAVING RGB IMAGE
     rendered_images = renderer(mesh)
-    rendered_image = rendered_images[0, ..., :3].cpu().numpy()
+    rgb_rendered_image = rendered_images[0, ..., :3].cpu().numpy()
 
-    print("Saving RGB rendered_image")
-    plt.imsave(dest_file, rendered_image)
+    rgb_save_path = Path(str(dest_file_prefix) + ".color.jpg")
+
+    plt.imsave(rgb_save_path, rgb_rendered_image)
+    print(f"Saved RGB rendered image at {rgb_save_path}")
 
     # 2. SAVING DEPTH IMAGE
-    # DEPTH EXPERIMENT
     fragments = rasterizer(mesh)
     depth_info = fragments.zbuf
     """
@@ -199,23 +200,25 @@ def render_py3d_img_and_depth(img_id, img_size, param, dest_file, mesh_dir, devi
     source: https://github.com/facebookresearch/pytorch3d/issues/35#issuecomment-583870676
     """
     depth_image = depth_info[0,...,0].cpu().numpy()
+    # In pytorch3d, holes in depth is rendered with -1 value. We replace with 0 as per RIO10 format.
+    depth_image[depth_image == -1] = 0
 
-    dest_path = Path(dest_file)
-    save_path = Path(str(dest_path.parents[0] / dest_path.stem) + "_depth.png")
-    save_depth_image(depth_image, save_path)
-    print("CURRENTLY HERE")
+    # depth_dest_path = Path(dest_file_prefix)
+    # depth_save_path = Path(str(depth_dest_path.parents[0] / depth_dest_path.stem) + "_depth.png")
+    depth_save_path = Path(str(dest_file_prefix) + ".rendered.depth.png")
+
+    save_depth_image(depth_image, depth_save_path, depth_in_metres=True)
 
 
-    viz = False
-    if viz == True:
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        ax1.imshow(rendered_image)
-        ax2.imshow(depth_image)
-
-        img_type = "rgb_depth_ctow" #"_true-pose-ctow"
-        save_imgs = True
-        if save_imgs:
-            plt.savefig("temp_dir/" + str(img_id) + "_depth_fig.png")
-            print(f"img saved to temp_dir/{str(img_id)}_depth_fig.png")
-        print("Showing rendered depth image")
+    
+    if viz_rgb_depth:
+        plot_images_simple(rgb_rendered_image, depth_image)
         plt.show()
+
+    # print("ORIGINAL ARRAY")
+    # print(np.unique(depth_image))
+    # depth_image_2 = read_depth_image_given_depth_path(save_path)
+    # print("READING SAVED ARRAY")
+    # print(np.unique(depth_image_2))
+
+

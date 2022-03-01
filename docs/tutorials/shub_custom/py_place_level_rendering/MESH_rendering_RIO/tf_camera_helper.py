@@ -46,6 +46,6 @@ class camera_params(object):
         self.K = K 
         self.img_size = img_size
         self.model = model
-        print("camera model:" ,model)
-        print("img size", img_size)
-        print("K", K)
+        # print("camera model:" ,model)
+        # print("img size", img_size)
+        # print("K", K)

@@ -51,12 +51,19 @@ def read_depth_image_given_colorimg_path(dataset_dir, r):
 
     return depth_image
 
-def save_depth_image(np_array, save_path):
+def save_depth_image(np_array, save_path, depth_in_metres=False):
+
     """
+    CONVENTION: We are representing holes in depth images with 0 as per RIO10 format (and you seem to be getting good metric results with this as well). 
+    So before passing depth_array to this function, ensure you replace [-1 in pytorch3d case] with 0. 
+
     Given numpy array of depth in millimetres, save the png image at save_path.
     save_path must end with "_depth.png" or "rendered.depth.png"
     """
+
     # If np_array in metres, do np_array*1000
+    if depth_in_metres:
+        np_array = np_array * 1000
     depth_mm = (np_array).astype(np.uint16)
 
     # with open(raw_data_folder + str(obs_id) + "_depth.png", 'wb') as fdep:
@@ -65,3 +72,16 @@ def save_depth_image(np_array, save_path):
         depth_gray2list = depth_mm.tolist()
         writer.write(fdep, depth_gray2list)
     print(f"Saved depth image at {save_path}")
+
+def write_individual_pose_txt_in_RIO_format(RT_ctow, dest_file_prefix):
+    # print(RT_ctow)
+    rows_list = [RT_ctow[0], RT_ctow[1], RT_ctow[2], RT_ctow[3]]
+    # print(rows_list)
+
+    pose_save_path = Path(str(dest_file_prefix) + ".pose.txt")
+    with open(pose_save_path, 'w') as f:
+        for row in rows_list:
+            row = ' '.join(map(str, row))
+            # name = q.split("/")[-1]
+            f.write(f'{row}\n')
+    print(f'Written individual pose to {pose_save_path}')
