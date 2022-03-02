@@ -14,9 +14,8 @@ import copy
 # Custom utils functions
 # from pytorch3d_utils import render_py3d_img
 from tf_camera_helper import convert_w_t_c, camera_params
-from places_creation import convex_hull, dbscan_clustering, rt_given_lookat
+from places_creation import convex_hull, dbscan_clustering, rt_given_lookat, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords, create_o3d_param_and_viz_image
-
 
 
 # def create_o3d_param_and_viz_image(mesh, RT, camera):
@@ -36,7 +35,7 @@ from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords, create_o3d_p
     
 
 # def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
-def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
+def misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
     # Visualise for particular centroid
     # in this case we will visualise for
     # number 10
@@ -45,6 +44,7 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pc
 
     #sampling points along center and convex hull point location
     sample_poses =  np.linspace(centroids_coordinates[test_num], sphere_center_coords, num=4)
+    sample_poses = sample_poses[:-1] #Want all poses except the last one, which is sphere_center itself.
     
 
     poses_list = [mesh]
@@ -63,23 +63,43 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pc
     #plot as mesh. This transform is camera to world
     #for image synth purposes, we will have to do world to camera
 
+    # 1. Lookat hull centroids from sphere_center
     RT = rt_given_lookat(centroids_coordinates[test_num],sphere_center_coords)
     camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], radius=0.2)
     poses_list.append(camera_center)
 
-
-    # visualise_camera(mesh, K, RT)
-    if viz_pcd:
-        o3d.visualization.draw_geometries(poses_list)
-
     RT_wtoc = convert_w_t_c(RT)
     create_o3d_param_and_viz_image(mesh, RT_wtoc, camera)
     
-    #if we want other way round
-    RT = rt_given_lookat(sphere_center_coords, centroids_coordinates[test_num])
-    RT_wtoc = convert_w_t_c(RT)
+    #2. if we want other way round: Lookat sphere_center from hull centroids
+    RT_other = rt_given_lookat(sphere_center_coords, centroids_coordinates[test_num])
+    camera_center_other = o3dframe_from_coords(RT_other, color=[0.6, 0.706, 1], radius=0.2)
+    poses_list.append(camera_center_other)
+
+    RT_wtoc = convert_w_t_c(RT_other)
     create_o3d_param_and_viz_image(mesh, RT_wtoc, camera)
+
+    # sample_poses: Visualizing not just spheres but also all frames at linspace sampled poses.
+    for i_coord in range(sample_poses.shape[0]):
+        RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
+        camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], radius=0.2)
+        poses_list.append(camera_center)
+
+    if viz_pcd:
+        o3d.visualization.draw_geometries(poses_list)
     return 
+
+def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
+    poses_list = [mesh]
+    list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords)
+
+    for RT in list_of_rts:
+        # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
+        camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], radius=0.2)
+        poses_list.append(camera_center)
+
+    if viz_pcd:
+        o3d.visualization.draw_geometries(poses_list)
 
 # def synth_image(viz_pcd=False, custom_dir=False):
 def main_linspace_poses(viz_pcd=False, custom_dir=False):
@@ -111,6 +131,8 @@ def main_linspace_poses(viz_pcd=False, custom_dir=False):
 
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
+
+    # misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
     viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
 
 

@@ -25,6 +25,29 @@ def rt_given_lookat(lookat,location):
     RT_ctow[3,3] = 1 
     return RT_ctow 
 
+#def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
+def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords):
+    list_of_rts = []
+    for hull_point in range(len(centroids_coordinates)):
+        # 1. NO SAMPLING: If you only want to render images looking from centroids_coordinates
+        # list_of_rts.append(rt_given_lookat(sphere_center_coords, centroids_coordinates[hull_point]))
+
+        # 2. SAMPLING: Sampling poses between every centroid and sphere center.
+        sample_poses =  np.linspace(centroids_coordinates[hull_point], sphere_center_coords, num=4)
+        sample_poses = sample_poses[:-1] #Want all poses except the last one, which is sphere_center itself.
+        for i_coord in range(sample_poses.shape[0]):
+            list_of_rts.append(rt_given_lookat(sphere_center_coords, sample_poses[i_coord]))
+
+
+        #Below for loop is giving NaNs. Skipping for now
+        # for pose in sample_poses:
+        #     #Here RT describes the location of the camera
+        #     RT = rt_given_lookat(sphere_center_coords, pose)
+        #     list_of_rts.append(RT)
+
+    # viz_image(list_of_rts, camera, dest_dir, mesh_dir, device)
+    return list_of_rts
+
 def convex_hull(mesh):
 
     ### 1. Convex hull

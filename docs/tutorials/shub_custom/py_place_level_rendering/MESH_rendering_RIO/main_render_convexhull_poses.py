@@ -47,7 +47,7 @@ from pytorch3d.utils import cameras_from_opencv_projection
 # Custom utils functions
 from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
 from tf_camera_helper import convert_w_t_c, camera_params
-from places_creation import convex_hull, dbscan_clustering, rt_given_lookat
+from places_creation import convex_hull, dbscan_clustering, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
 from io_helper import write_individual_pose_txt_in_RIO_format
 
@@ -83,30 +83,6 @@ def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
         write_individual_pose_txt_in_RIO_format(RT_ctow, dest_file_prefix)
         render_py3d_img_and_depth(i, img_size, param, dest_file_prefix, mesh_dir, device)
 
-#def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
-def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords):
-    # Visualise for particular centroid
-    # in this case we will visualise for
-    # number 10
-    list_of_rts = []
-    for hull_point in range(len(centroids_coordinates)):
-        # print("centroid, coordinates", centroids_coordinates[hull_point], sphere_center_coords)
-        #sampling points along center and convex hull point location
-        #sample_poses =  np.linspace(centroids_coordinates[hull_point], sphere_center_coords, num=5)
-
-        #list_of_rts = []
-        
-        #rt_given_lookat(lookat,location)
-        list_of_rts.append(rt_given_lookat(sphere_center_coords, centroids_coordinates[hull_point]))
-        #Below for loop is giving NaNs. Skipping for now
-        # for pose in sample_poses:
-        #     #Here RT describes the location of the camera
-        #     RT = rt_given_lookat(sphere_center_coords, pose)
-        #     list_of_rts.append(RT)
-
-    #print(list_of_rts)
-    # viz_image(list_of_rts, camera, dest_dir, mesh_dir, device)
-    return list_of_rts
         
 #def synth_image(viz_pcd=False, custom_dir=False, device=None):
 def render_places_main(viz_pcd=False, custom_dir=False, device=None):
