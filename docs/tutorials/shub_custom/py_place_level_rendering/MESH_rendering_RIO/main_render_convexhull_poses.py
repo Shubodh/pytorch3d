@@ -9,6 +9,7 @@ import matplotlib.image as mpimg
 import yaml
 import open3d as o3d
 import copy
+import argparse
 
 import torch
 import torch.nn.functional as F
@@ -52,7 +53,7 @@ from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
 from io_helper import write_individual_pose_txt_in_RIO_format
 
 #def viz_image(RT_list, camera, dest_dir, mesh_dir, device):
-def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
+def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_dir, device):
     """
     Render images based on RT_list
     """
@@ -72,7 +73,8 @@ def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
     for i, RT_ctow in enumerate(RT_list):
         # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
         param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
-        dest_file = 'places-' + '{:06d}'.format(i)
+        #dest_file = 'places-' + '{:06d}'.format(i)
+        dest_file = 'places-'+ str(int(fix_up_coord * 10)) + '-' + '{:06d}'.format(i)
         dest_file_prefix = os.path.join(dest_dir, dest_file)
         print(f"\n{dest_file_prefix}")
 
@@ -85,24 +87,32 @@ def render_all_imgs_from_RT_list(RT_list, camera, dest_dir, mesh_dir, device):
 
         
 #def synth_image(viz_pcd=False, custom_dir=False, device=None):
-def render_places_main(viz_pcd=False, custom_dir=False, device=None):
+def render_places_main(output_path, scene_id, viz_pcd=False, custom_dir=False, device=None):
     #Reading data paths
-    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
-    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
+    #mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
+    #camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
+    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
    
     ada = not viz_pcd
     if ada==True:
-        mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
-        camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
+        #mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
+        #camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
+        mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
 
     if custom_dir:
-        mesh_dir = "../../../../../scene01/models01/"
-        camera_dir = "../../../../../scene01/seq01/"
+        #mesh_dir = "../../../../../scene01/models01/"
+        #camera_dir = "../../../../../scene01/seq01/"
+        mesh_dir = "../../../../../scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "../../../../../scene" + scene_id + "/seq" + scene_id + "/"
 
     #To edit:
     #Sequence number and where visualisations are saved:
-    sequence_num = 'seq01_01/'
-    dest_dir = "temp_dir"
+    #sequence_num = 'seq01_01/'
+    sequence_num = 'seq' + scene_id + '_01/'
+    #dest_dir = "temp_dir"
+    dest_dir = str(output_path)
 
 
 
@@ -118,19 +128,29 @@ def render_places_main(viz_pcd=False, custom_dir=False, device=None):
 
     # ### fixing up coordinate for clusters
     pcd_hull_points = (np.asarray(pcd_hull.points))
-    pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape)
+
+
+    sphere_center_height = 1.5
+    pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * sphere_center_height 
     sphere_center_coords = np.mean(pcd_hull_points, axis=0)
-    
-    centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape)
 
     #Set Camera parameters
+
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
     print(device)
+    
+    #fix_up_coord = 1.6 #0.5, 1, 1.5, 2, 2.5
+    fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
+    for fix_up_coord in fix_up_coord_list:
+        print(f"Fixing up coord as {fix_up_coord}")
 
-    list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords)
-    # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
-    render_all_imgs_from_RT_list(list_of_rts, camera, dest_dir, mesh_dir, device)
+        centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
+
+        linspace_num = 5
+        list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
+        # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
+        render_all_imgs_from_RT_list(fix_up_coord, list_of_rts, camera, dest_dir, mesh_dir, device)
 
 
 if __name__ == '__main__':
@@ -143,6 +163,11 @@ if __name__ == '__main__':
     y - down
     x - cross
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scene_id', type=str, required=True)
+    parser.add_argument('--output_path', type=Path, required=True)
+    args = parser.parse_args()
+    
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.cuda.set_device(device)
@@ -151,5 +176,7 @@ if __name__ == '__main__':
 
     viz_pcd = False
     # final_poses = poses_for_places(viz_pcd, True)
-    render_places_main(viz_pcd, False, device)
+    #scene_id = "01" # "02" #"01"
+    scene_id = args.scene_id
+    render_places_main(args.output_path, scene_id, viz_pcd, False, device)
 

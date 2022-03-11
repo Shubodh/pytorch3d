@@ -26,17 +26,20 @@ def rt_given_lookat(lookat,location):
     return RT_ctow 
 
 #def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
-def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords):
+def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num):
     list_of_rts = []
     for hull_point in range(len(centroids_coordinates)):
         # 1. NO SAMPLING: If you only want to render images looking from centroids_coordinates
         # list_of_rts.append(rt_given_lookat(sphere_center_coords, centroids_coordinates[hull_point]))
 
         # 2. SAMPLING: Sampling poses between every centroid and sphere center.
-        sample_poses =  np.linspace(centroids_coordinates[hull_point], sphere_center_coords, num=4)
+        sample_poses =  np.linspace(centroids_coordinates[hull_point], sphere_center_coords, num=linspace_num) # previously 4, 8
         sample_poses = sample_poses[:-1] #Want all poses except the last one, which is sphere_center itself.
         for i_coord in range(sample_poses.shape[0]):
+            # 2. A: lookat sphere_center from sampled point
             list_of_rts.append(rt_given_lookat(sphere_center_coords, sample_poses[i_coord]))
+            # 2. B: lookat sampled point from  sphere_center
+            list_of_rts.append(rt_given_lookat(sample_poses[i_coord], sphere_center_coords))
 
 
         #Below for loop is giving NaNs. Skipping for now
