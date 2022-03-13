@@ -1,6 +1,7 @@
 import open3d as o3d
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 #def create_rt(lookat,location):
 def rt_given_lookat(lookat,location):
@@ -27,6 +28,10 @@ def rt_given_lookat(lookat,location):
 
 #def viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir, device):
 def create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num):
+    and_midpoint_points = (centroids_coordinates[1:] + centroids_coordinates[:-1]) / 2
+    centroids_coordinates_and_midpoint_points = np.vstack((centroids_coordinates, and_midpoint_points))
+    print(f"hi debug: {centroids_coordinates.shape, centroids_coordinates, centroids_coordinates_and_midpoint_points}")
+    sys.exit()
     list_of_rts = []
     for hull_point in range(len(centroids_coordinates)):
         # 1. NO SAMPLING: If you only want to render images looking from centroids_coordinates
