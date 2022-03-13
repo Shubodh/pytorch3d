@@ -91,13 +91,27 @@ def misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, v
 
 def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
     poses_list = [mesh]
-    list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords)
+    # fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
+    # fix_up_coord_list = [0, -0.5, -1, -1.5, -2]
+    fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
+    print(sphere_center_coords)
+    # sys.exit()
+    for fix_up_coord in fix_up_coord_list:
+        print(f"Fixing up coord as {fix_up_coord}")
 
-    for RT in list_of_rts:
-        # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
-        camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], radius=0.2)
-        poses_list.append(camera_center)
+        centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
+        linspace_num = 5
+        list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
+
+        for RT in list_of_rts:
+            # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
+            # camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], size=0.1)
+            camera_center = o3dsphere_from_coords(RT[:3,3], color=[1, 0.706, 0], radius = 0.05)
+            poses_list.append(camera_center)
+
+    sphere_center = o3dsphere_from_coords(sphere_center_coords, color=[0, 0.706, 0], radius = 0.1)
+    poses_list.append(sphere_center)
     if viz_pcd:
         o3d.visualization.draw_geometries(poses_list)
 
@@ -122,11 +136,18 @@ def main_linspace_poses(viz_pcd=False, custom_dir=False):
     pcd_hull = convex_hull(mesh)
     colored_pcd_hull, centroids_coordinates = dbscan_clustering(pcd_hull)
 
-    # ### fixing up coordinate for clusters
-    pcd_hull_points = (np.asarray(pcd_hull.points))
-    pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape)
-    sphere_center_coords = np.mean(pcd_hull_points, axis=0)
+    # 1. A. fixing up coordinate for sphere_center_coord 
+    # pcd_hull_points = (np.asarray(pcd_hull.points))
+    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape)
+    # sphere_center_coords = np.mean(pcd_hull_points, axis=0)
     
+
+    # 1. B. Messing with height of sphere_center_coord
+    pcd_hull_points = (np.asarray(pcd_hull.points))
+    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * 1.48
+    sphere_center_coords = np.mean(pcd_hull_points, axis=0)
+
+
     centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape)
 
     camera = camera_params(camera_dir)

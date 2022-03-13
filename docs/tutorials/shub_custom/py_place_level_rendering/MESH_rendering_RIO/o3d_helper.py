@@ -1,8 +1,8 @@
 import open3d as o3d 
 import copy
 
-def o3dframe_from_coords(RT, color=[1, 0.706, 0], radius = 0.2):
-    frame_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=[0, 0, 0], size=1)
+def o3dframe_from_coords(RT, color=[1, 0.706, 0], size=1):
+    frame_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=[0, 0, 0], size=size)
     # sphere = copy.deepcopy(sphere_mesh).translate(coords)
     # sphere.paint_uniform_color(color)
     #print("RT", RT)
