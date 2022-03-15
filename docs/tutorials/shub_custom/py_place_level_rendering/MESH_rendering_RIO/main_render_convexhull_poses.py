@@ -48,7 +48,7 @@ from pytorch3d.utils import cameras_from_opencv_projection
 # Custom utils functions
 from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
 from tf_camera_helper import convert_w_t_c, camera_params
-from places_creation import convex_hull, dbscan_clustering, create_list_of_rts_for_all_places
+from places_creation import all_coords_from_mesh, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
 from io_helper import write_individual_pose_txt_in_RIO_format
 
@@ -114,40 +114,23 @@ def render_places_main(output_path, scene_id, viz_pcd=False, custom_dir=False, d
     #dest_dir = "temp_dir"
     dest_dir = str(output_path)
 
-
-
     mesh_dir = os.path.join(mesh_dir, sequence_num)
     camera_dir = os.path.join(camera_dir, sequence_num)
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
-
-    #Apply Convex Hull
-    pcd_hull = convex_hull(mesh)
-    colored_pcd_hull, centroids_coordinates = dbscan_clustering(pcd_hull)
-
-
-    # ### fixing up coordinate for clusters
-    pcd_hull_points = (np.asarray(pcd_hull.points))
-
-
-    sphere_center_height = 1.5
-    pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * sphere_center_height 
-    sphere_center_coords = np.mean(pcd_hull_points, axis=0)
+    
+    centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
 
     #Set Camera parameters
-
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
     print(device)
     
-    #fix_up_coord = 1.6 #0.5, 1, 1.5, 2, 2.5
-    fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
     for fix_up_coord in fix_up_coord_list:
         print(f"Fixing up coord as {fix_up_coord}")
 
         centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
-        linspace_num = 5
         list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
         # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
         render_all_imgs_from_RT_list(fix_up_coord, list_of_rts, camera, dest_dir, mesh_dir, device)

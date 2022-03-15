@@ -112,3 +112,23 @@ def dbscan_clustering(pcd_hull):
     pcd_hull.colors = o3d.utility.Vector3dVector(colors[:, :3])
 
     return pcd_hull, centroids_coordinates
+
+def all_coords_from_mesh(mesh):
+    # TODO1: mesh avg across :2, or avg of np.max and np.min, then fix sphere_center_coords' :,2 i.e. z coordinate
+    #Apply Convex Hull
+    pcd_hull = convex_hull(mesh)
+    colored_pcd_hull, centroids_coordinates = dbscan_clustering(pcd_hull)
+
+    # ### fixing up coordinate for clusters
+    pcd_hull_points = (np.asarray(pcd_hull.points))
+    # sphere_center_height = 1.5 #1.48
+    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * sphere_center_height 
+    sphere_center_coords = np.mean(pcd_hull_points, axis=0)
+
+    # TODO2: Automate this [] using linspace and info from TODO1
+    # fix_up_coord_list = [-0.5] #0.5, 1, 1.5, 2, 2.5
+    #fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
+    fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
+    linspace_num = 5
+
+    return centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num

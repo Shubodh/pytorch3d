@@ -14,7 +14,7 @@ import copy
 # Custom utils functions
 # from pytorch3d_utils import render_py3d_img
 from tf_camera_helper import convert_w_t_c, camera_params
-from places_creation import convex_hull, dbscan_clustering, rt_given_lookat, create_list_of_rts_for_all_places
+from places_creation import all_coords_from_mesh, rt_given_lookat, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords, create_o3d_param_and_viz_image
 
 
@@ -89,19 +89,13 @@ def misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, v
         o3d.visualization.draw_geometries(poses_list)
     return 
 
-def viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera):
+def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera):
     poses_list = [mesh]
-    # fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
-    # fix_up_coord_list = [0, -0.5, -1, -1.5, -2]
-    fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
-    print(sphere_center_coords)
-    # sys.exit()
     for fix_up_coord in fix_up_coord_list:
         print(f"Fixing up coord as {fix_up_coord}")
 
         centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
-        linspace_num = 5
         list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
 
         for RT in list_of_rts:
@@ -132,29 +126,13 @@ def main_linspace_poses(viz_pcd=False, custom_dir=False):
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
 
-    #Apply Convex Hull
-    pcd_hull = convex_hull(mesh)
-    colored_pcd_hull, centroids_coordinates = dbscan_clustering(pcd_hull)
-
-    # 1. A. fixing up coordinate for sphere_center_coord 
-    # pcd_hull_points = (np.asarray(pcd_hull.points))
-    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape)
-    # sphere_center_coords = np.mean(pcd_hull_points, axis=0)
-    
-
-    # 1. B. Messing with height of sphere_center_coord
-    pcd_hull_points = (np.asarray(pcd_hull.points))
-    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * 1.48
-    sphere_center_coords = np.mean(pcd_hull_points, axis=0)
-
-
-    centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape)
+    centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
 
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
 
     # misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
-    viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
+    viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera)
 
 
 if __name__ == '__main__':
