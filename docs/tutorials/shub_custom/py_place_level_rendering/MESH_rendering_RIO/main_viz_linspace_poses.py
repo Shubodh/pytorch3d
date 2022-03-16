@@ -9,6 +9,7 @@ import matplotlib.image as mpimg
 import yaml
 import open3d as o3d
 import copy
+import argparse
 
 
 # Custom utils functions
@@ -110,19 +111,31 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
         o3d.visualization.draw_geometries(poses_list)
 
 # def synth_image(viz_pcd=False, custom_dir=False):
-def main_linspace_poses(viz_pcd=False, custom_dir=False):
+def main_linspace_poses(scene_id, viz_pcd=False, custom_dir=False):
     #Reading data paths
-    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/seq01_01/"
-    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/seq01_01/"
+    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
    
     ada = not viz_pcd
     if ada==True:
-        mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
-        camera_dir = "scratch/saishubodh/RIO10_data/scene01/seq01/seq01_01/"
+        #mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
+        #camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
+        mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
 
     if custom_dir:
-        mesh_dir = "../../../../../scene01/models01/seq01_01/"
-        camera_dir = "../../../../../scene01/seq01/seq01_01/"
+        #mesh_dir = "../../../../../scene01/models01/"
+        #camera_dir = "../../../../../scene01/seq01/"
+        mesh_dir = "../../../../../scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "../../../../../scene" + scene_id + "/seq" + scene_id + "/"
+
+    #To edit:
+    #Sequence number and where visualisations are saved:
+    #sequence_num = 'seq01_01/'
+    sequence_num = 'seq' + scene_id + '_01/'
+
+    mesh_dir = os.path.join(mesh_dir, sequence_num)
+    camera_dir = os.path.join(camera_dir, sequence_num)
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
 
@@ -145,6 +158,11 @@ if __name__ == '__main__':
     y - down
     x - cross
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scene_id', type=str, required=True)
+    args = parser.parse_args()
+
     viz_pcd = True
     # final_poses = poses_for_places(viz_pcd, True)
-    main_linspace_poses(viz_pcd=viz_pcd, custom_dir=False)
+    scene_id = args.scene_id
+    main_linspace_poses(scene_id, viz_pcd=viz_pcd, custom_dir=False)
