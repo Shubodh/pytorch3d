@@ -114,21 +114,26 @@ def dbscan_clustering(pcd_hull):
     return pcd_hull, centroids_coordinates
 
 def all_coords_from_mesh(mesh):
-    # TODO1: mesh avg across :2, or avg of np.max and np.min, then fix sphere_center_coords' :,2 i.e. z coordinate
+    mesh_array = np.asarray(mesh.vertices)
+    room_center_z = (np.max(mesh_array[:,2]) - np.min(mesh_array[:,2])) / 2 #np.average(mesh_array[:,2]) is skewed towards floor, probably because of higher density below.
+
+
     #Apply Convex Hull
     pcd_hull = convex_hull(mesh)
     colored_pcd_hull, centroids_coordinates = dbscan_clustering(pcd_hull)
 
     # ### fixing up coordinate for clusters
     pcd_hull_points = (np.asarray(pcd_hull.points))
-    # sphere_center_height = 1.5 #1.48
-    # pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * sphere_center_height 
+    sphere_center_height = room_center_z #1.48
+    pcd_hull_points[:,2] = np.ones((pcd_hull_points[:,2]).shape) * sphere_center_height 
     sphere_center_coords = np.mean(pcd_hull_points, axis=0)
 
-    # TODO2: Automate this [] using linspace and info from TODO1
+    # Automate this fix_up_coord_list using linspace and info from mesh max and min 
     # fix_up_coord_list = [-0.5] #0.5, 1, 1.5, 2, 2.5
-    #fix_up_coord_list = [0.5, 1, 1.5, 2, 2.5]
-    fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
-    linspace_num = 5
+    # fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
+    linspace_num_across_room_height = 7 # np.min - 0.5 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
+    fix_up_coord_arr =  np.linspace(np.min(mesh_array[:,2]) - 0.5, np.max(mesh_array[:,2]),   num=linspace_num_across_room_height) 
+    fix_up_coord_list = list(fix_up_coord_arr) 
 
-    return centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num
+    linspace_num_across_ray = 5
+    return centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num_across_ray

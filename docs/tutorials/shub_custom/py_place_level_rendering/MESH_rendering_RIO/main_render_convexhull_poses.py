@@ -74,7 +74,7 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
         # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
         param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
         #dest_file = 'places-' + '{:06d}'.format(i)
-        dest_file = 'places-'+ str(int(fix_up_coord * 10)) + '-' + '{:06d}'.format(i)
+        dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i)
         dest_file_prefix = os.path.join(dest_dir, dest_file)
         print(f"\n{dest_file_prefix}")
 
@@ -127,7 +127,7 @@ def render_places_main(output_path, scene_id, viz_pcd=False, custom_dir=False, d
     print(device)
     
     for fix_up_coord in fix_up_coord_list:
-        print(f"Fixing up coord as {fix_up_coord}")
+        # print(f"Fixing up coord as {fix_up_coord}")
 
         centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
