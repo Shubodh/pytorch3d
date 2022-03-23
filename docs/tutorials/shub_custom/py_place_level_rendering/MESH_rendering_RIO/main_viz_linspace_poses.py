@@ -101,8 +101,8 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
 
         for RT in list_of_rts:
             # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
-            # camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], size=0.1)
-            camera_center = o3dsphere_from_coords(RT[:3,3], color=[1, 0.706, 0], radius = 0.05)
+            camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], size=0.1)
+            # camera_center = o3dsphere_from_coords(RT[:3,3], color=[1, 0.706, 0], radius = 0.05)
             poses_list.append(camera_center)
 
     sphere_center = o3dsphere_from_coords(sphere_center_coords, color=[0, 0.706, 0], radius = 0.1)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     x - cross
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scene_id', type=str, required=True)
+    parser.add_argument('--scene_id', type=str, required=True) #01
     args = parser.parse_args()
 
     viz_pcd = True
