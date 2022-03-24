@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-#def rt_given_lookat_planar(lookat,location):
+from numpy.linalg import det, norm
+
+# def rt_given_lookat(lookat,location):
 def rt_given_lookat_planar(lookat,location):
     """
     This only works For planar cases, i.e. vector joining lookat and location are parallel to ground. See Notion link for more info.
@@ -27,6 +29,11 @@ def rt_given_lookat_planar(lookat,location):
     RT_ctow[0:3,2] = z
     RT_ctow[0:3,3] = np.array(location)
     RT_ctow[3,3] = 1 
+
+    R = RT_ctow[0:3, 0:3]
+    assert np.isclose(det(R), 1) #wrong currently
+    assert np.allclose(R @ R.T, np.eye(3))
+
     return RT_ctow 
 
 # def rt_given_lookat_new(lookat,location):
@@ -45,13 +52,22 @@ def rt_given_lookat(lookat,location):
 
     y_down = np.array([0,0,-1]) #down vector direction in world frame
 
-    x = np.cross(y_down, z)
-    y = np.cross(z,x)
+    x_axis = np.cross(y_down, z)
+    x = x_axis/np.linalg.norm(x_axis)
+
+    y_axis = np.cross(z,x)
+    y = y_axis/np.linalg.norm(y_axis)
 
     RT_ctow = np.zeros((4,4))
     RT_ctow[0:3,0] = x 
     RT_ctow[0:3,1] = y 
     RT_ctow[0:3,2] = z
+    R = RT_ctow[0:3, 0:3]
+
+    # assert Rotation matrix properties
+    assert np.isclose(det(R), 1)
+    assert np.allclose(R @ R.T, np.eye(3))
+
     RT_ctow[0:3,3] = np.array(location)
     RT_ctow[3,3] = 1 
     return RT_ctow 
