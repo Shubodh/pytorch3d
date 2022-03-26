@@ -111,7 +111,7 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
         o3d.visualization.draw_geometries(poses_list)
 
 # def synth_image(viz_pcd=False, custom_dir=False):
-def main_linspace_poses(scene_id, viz_pcd=False, custom_dir=False):
+def main_linspace_poses(ref_not_query, scene_id, viz_pcd=False, custom_dir=False):
     #Reading data paths
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
     camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
@@ -132,7 +132,10 @@ def main_linspace_poses(scene_id, viz_pcd=False, custom_dir=False):
     #To edit:
     #Sequence number and where visualisations are saved:
     #sequence_num = 'seq01_01/'
-    sequence_num = 'seq' + scene_id + '_01/'
+    if ref_not_query:
+        sequence_num = 'seq' + scene_id + '_01/'
+    else:
+        sequence_num = 'seq' + scene_id + '_02/'
 
     mesh_dir = os.path.join(mesh_dir, sequence_num)
     camera_dir = os.path.join(camera_dir, sequence_num)
@@ -160,9 +163,13 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_id', type=str, required=True) #01
+    parser.add_argument('--ref_or_query', type=str, required=True) #If reference, do "--ref_or_query ref". If query, anything else.
     args = parser.parse_args()
 
     viz_pcd = True
     # final_poses = poses_for_places(viz_pcd, True)
     scene_id = args.scene_id
-    main_linspace_poses(scene_id, viz_pcd=viz_pcd, custom_dir=False)
+    ref_not_query = args.ref_or_query
+    ref_not_query = (ref_not_query=="ref")
+
+    main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False)

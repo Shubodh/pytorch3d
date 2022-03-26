@@ -87,7 +87,7 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
 
         
 #def synth_image(viz_pcd=False, custom_dir=False, device=None):
-def render_places_main(output_path, scene_id, viz_pcd=False, custom_dir=False, device=None):
+def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, custom_dir=False, device=None):
     #Reading data paths
     #mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
     #camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
@@ -110,7 +110,10 @@ def render_places_main(output_path, scene_id, viz_pcd=False, custom_dir=False, d
     #To edit:
     #Sequence number and where visualisations are saved:
     #sequence_num = 'seq01_01/'
-    sequence_num = 'seq' + scene_id + '_01/'
+    if ref_not_query:
+        sequence_num = 'seq' + scene_id + '_01/'
+    else:
+        sequence_num = 'seq' + scene_id + '_02/'
     #dest_dir = "temp_dir"
     dest_dir = str(output_path)
 
@@ -149,6 +152,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_id', type=str, required=True)
     parser.add_argument('--output_path', type=Path, required=True)
+    parser.add_argument('--ref_or_query', type=str, required=True) #If reference, do "--ref_or_query ref". If query, anything else.
     args = parser.parse_args()
     
     if torch.cuda.is_available():
@@ -161,5 +165,7 @@ if __name__ == '__main__':
     # final_poses = poses_for_places(viz_pcd, True)
     #scene_id = "01" # "02" #"01"
     scene_id = args.scene_id
-    render_places_main(args.output_path, scene_id, viz_pcd, False, device)
+    ref_not_query = args.ref_or_query
+    ref_not_query = (ref_not_query=="ref")
+    render_places_main(ref_not_query, args.output_path, scene_id, viz_pcd, False, device)
 
