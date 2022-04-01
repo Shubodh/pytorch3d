@@ -90,14 +90,14 @@ def misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, v
         o3d.visualization.draw_geometries(poses_list)
     return 
 
-def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera):
+def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull):
     poses_list = [mesh]
     for fix_up_coord in fix_up_coord_list:
-        print(f"Fixing up coord as {fix_up_coord}")
+        print(f"Fixing up coord for hull points as {fix_up_coord}")
 
         centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
-        list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
+        list_of_rts = create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_center_coords, linspace_num)
 
         for RT in list_of_rts:
             # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
@@ -142,13 +142,13 @@ def main_linspace_poses(ref_not_query, scene_id, viz_pcd=False, custom_dir=False
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
 
-    centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
+    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
 
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
 
     # misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
-    viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera)
+    viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull)
 
 
 if __name__ == '__main__':

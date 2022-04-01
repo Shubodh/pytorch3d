@@ -122,7 +122,7 @@ def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, cust
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
     
-    centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
+    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
 
     #Set Camera parameters
     camera = camera_params(camera_dir)
@@ -134,7 +134,7 @@ def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, cust
 
         centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
-        list_of_rts = create_list_of_rts_for_all_places(centroids_coordinates, sphere_center_coords, linspace_num)
+        list_of_rts = create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_center_coords, linspace_num)
         # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
         render_all_imgs_from_RT_list(fix_up_coord, list_of_rts, camera, dest_dir, mesh_dir, device)
 
