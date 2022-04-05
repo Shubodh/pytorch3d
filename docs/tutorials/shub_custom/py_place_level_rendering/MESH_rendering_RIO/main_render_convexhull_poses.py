@@ -122,7 +122,7 @@ def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, cust
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
     
-    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
+    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh, ref_not_query)
 
     #Set Camera parameters
     camera = camera_params(camera_dir)

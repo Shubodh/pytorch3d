@@ -169,7 +169,7 @@ def dbscan_clustering(pcd_hull):
 
     return pcd_hull, centroids_coordinates
 
-def all_coords_from_mesh(mesh):
+def all_coords_from_mesh(mesh, ref_not_query):
     mesh_array = np.asarray(mesh.vertices)
     # room_center_z = (np.max(mesh_array[:,2]) - np.min(mesh_array[:,2])) / 2 # this is towards ceiling, not desirable as most images from robot are usually towards floor.
     room_center_z = np.average(mesh_array[:,2]) # is skewed towards floor, probably because of higher density below.
@@ -189,11 +189,18 @@ def all_coords_from_mesh(mesh):
     # Automate this fix_up_coord_list using linspace and info from mesh max and min 
     # fix_up_coord_list = [-0.5] #0.5, 1, 1.5, 2, 2.5
     # fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
-    linspace_num_across_room_height = 7 # np.min - 0.5 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
-    fix_up_coord_arr =  np.linspace(np.min(mesh_array[:,2]) - 0.5, np.max(mesh_array[:,2]),   num=linspace_num_across_room_height) 
+    if ref_not_query:
+        linspace_num_across_room_height = 7 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
+        linspace_num_across_ray = 5
+    else: 
+        linspace_num_across_room_height = 4
+        linspace_num_across_ray = 2
+
+
+
+    fix_up_coord_arr =  np.linspace(np.min(mesh_array[:,2]) - 1.0, np.max(mesh_array[:,2]),   num=linspace_num_across_room_height) 
     fix_up_coord_list = list(fix_up_coord_arr) 
 
-    linspace_num_across_ray = 5
 
     # test_in_hull(centroids_coordinates, fix_up_coord_list, pcd_hull)
 
