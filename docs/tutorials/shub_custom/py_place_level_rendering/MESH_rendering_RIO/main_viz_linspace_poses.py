@@ -90,7 +90,7 @@ def misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, v
         o3d.visualization.draw_geometries(poses_list)
     return 
 
-def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull):
+def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull, points_viz):
     poses_list = [mesh]
     for fix_up_coord in fix_up_coord_list:
         print(f"Fixing up coord for hull points as {fix_up_coord}")
@@ -101,8 +101,10 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
 
         for RT in list_of_rts:
             # RT = rt_given_lookat(sphere_center_coords, sample_poses[i_coord])
-            camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], size=0.1)
-            # camera_center = o3dsphere_from_coords(RT[:3,3], color=[1, 0.706, 0], radius = 0.05)
+            if points_viz:
+                camera_center = o3dsphere_from_coords(RT[:3,3], color=[1, 0.706, 0], radius = 0.05)
+            else:
+                camera_center = o3dframe_from_coords(RT, color=[0.6, 0.706, 1], size=0.1)
             poses_list.append(camera_center)
 
     sphere_center = o3dsphere_from_coords(sphere_center_coords, color=[0, 0.706, 0], radius = 0.1)
@@ -111,7 +113,7 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
         o3d.visualization.draw_geometries(poses_list)
 
 # def synth_image(viz_pcd=False, custom_dir=False):
-def main_linspace_poses(ref_not_query, scene_id, viz_pcd=False, custom_dir=False):
+def main_linspace_poses(ref_not_query, scene_id, viz_pcd=False, custom_dir=False, points_viz=True):
     #Reading data paths
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
     camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
@@ -142,13 +144,13 @@ def main_linspace_poses(ref_not_query, scene_id, viz_pcd=False, custom_dir=False
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
 
-    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh)
+    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh, ref_not_query)
 
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
 
     # misc_viz_linspace_poses(centroids_coordinates, sphere_center_coords, mesh, viz_pcd, camera)
-    viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull)
+    viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num, mesh, viz_pcd, camera, pcd_hull, points_viz)
 
 
 if __name__ == '__main__':
@@ -163,13 +165,17 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_id', type=str, required=True) #01
-    parser.add_argument('--ref_or_query', type=str, required=True) #If reference, do "--ref_or_query ref". If query, anything else.
+    parser.add_argument('--ref_or_query', type=str, required=True) # Acceptable args: 'ref' / 'query'
+    #If reference, do "--ref_or_query ref". If query, anything else.
     args = parser.parse_args()
 
     viz_pcd = True
+    points_viz = True #If you want to visualize balls, True; if frames, False.
     # final_poses = poses_for_places(viz_pcd, True)
     scene_id = args.scene_id
     ref_not_query = args.ref_or_query
     ref_not_query = (ref_not_query=="ref")
 
-    main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False)
+    if ref_not_query:
+        main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False, points_viz=points_viz)
+    main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False, points_viz=False)

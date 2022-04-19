@@ -193,8 +193,11 @@ def all_coords_from_mesh(mesh, ref_not_query):
         linspace_num_across_room_height = 7 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
         linspace_num_across_ray = 5
     else: 
-        linspace_num_across_room_height = 4
-        linspace_num_across_ray = 2
+        print("should change sampling later for QUERY")
+        linspace_num_across_room_height = 7 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
+        linspace_num_across_ray = 5
+        # linspace_num_across_room_height = 4
+        # linspace_num_across_ray = 2
 
 
 
