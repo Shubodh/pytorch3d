@@ -102,7 +102,7 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_id', type=str, required=True) #01
-    parser.add_argument('--ref_or_query', type=str, required=True) # Acceptable args: 'ref' / 'query'
+    parser.add_argument('--ref_or_query', type=str, required=True, choices=['ref', 'query']) # Acceptable args: 'ref' / 'query'
     #If reference, do "--ref_or_query ref". If query, anything else.
     args = parser.parse_args()
 
