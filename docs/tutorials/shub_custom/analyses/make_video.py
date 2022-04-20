@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('--scene_id', type=str, required=True) # 01 or 02 etc
     parser.add_argument('--on_ada', type=str, required=True,choices=['ada', 'shub_local', 'aryan_local'], help ='where running code') 
     parser.add_argument('--ref_or_query', type=str, required=True,choices=['ref', 'query'], help ='save ref vids or query') 
-    parser.add_argument('--save_rendered_vid', dest='save_rendered_vid', default=False, required=True, action='store_true') # Just provide "--save_rendered_vid" on command line if you want to save rendered vid. Don't set it to anything if you want to save normal original vids.
+    parser.add_argument('--save_rendered_vid', dest='save_rendered_vid', default=False, action='store_true') # Just provide "--save_rendered_vid" on command line if you want to save rendered vid. Don't set it to anything if you want to save normal original vids.
     args = parser.parse_args()
 
     # final_poses = poses_for_places(viz_pcd, True)
