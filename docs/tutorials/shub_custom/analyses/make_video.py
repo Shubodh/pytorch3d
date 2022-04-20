@@ -1,13 +1,16 @@
 import os 
 import cv2 
 import argparse
+from pathlib import Path
+import sys
+from tqdm import tqdm
 
-def save_vid(camera_dir, sequence_num, fps=10, interval=5):
+def save_vid_from_downloads_folder_given_seq_no(camera_dir, sequence_num, fps=10, interval=5):
     """
     Creates a video in the directory where this file is run from
     args:
         camera_dir -> directory where sequences are recorded
-        sequence_num -> directory for sequence
+        sequence_num -> ending dir path: 'seq' + scene_id + '_01/'
         fps -> fps of video you want
         interval -> how many frames to skip
     TODO: add a dest path option
@@ -28,12 +31,14 @@ def save_vid(camera_dir, sequence_num, fps=10, interval=5):
     # print(images_files)
     # for i in images_files:
     #     print(i, os.path.isfile(i))
+    vid_name = str(sequence_num)[:-1]
     img_ = cv2.imread(images_files[0])
     H, W, C = img_.shape
-    print(H,W,C)
-    video=cv2.VideoWriter('video.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps,(W, H))
+    # print(H,W,C)
+    video=cv2.VideoWriter(vid_name +'_original' + '.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps,(W, H))
     count = 0
-    for image in images_files:
+    print(f"writing video to {vid_name}_original.mp4")
+    for image in tqdm(images_files):
         if count%interval == 0:
             img = cv2.imread(image)
             video.write(img)
@@ -43,7 +48,7 @@ def save_vid(camera_dir, sequence_num, fps=10, interval=5):
     cv2.destroyAllWindows()
     video.release()
 
-def save_vid_rendered(camera_dir, fps=10, interval=5):
+def save_vid_from_rgb_imgs_given_any_folder_path(folder_path, fps=10, interval=5):
     """
     Creates a video in the directory where this file is run from
     args:
@@ -92,21 +97,24 @@ if __name__ == '__main__':
     Reads jpg files from dir, and saves a video
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scene_id', type=str, required=True)
+    parser.add_argument('--scene_id', type=str, required=True) # 01 or 02 etc
+    parser.add_argument('--on_ada', type=str, required=True,choices=['ada', 'shub_local', 'aryan_local'], help ='where running code') 
     args = parser.parse_args()
 
     # final_poses = poses_for_places(viz_pcd, True)
     scene_id = args.scene_id
+    on_ada = args.on_ada
 
-    custom_dir = False 
-    ada = True 
+    custom_dir = (on_ada=="aryan_local") 
+    ada = (on_ada=="ada")
+    # ada = False
     #viz_pcd = True
 
     mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
     camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
    
     #ada = not viz_pcd
-    if ada==True:
+    if ada:
         #mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
         #camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
         mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
@@ -122,6 +130,7 @@ if __name__ == '__main__':
     # MAKE SURE IT IS SAVE WITHOUT '/'
     sequence_num = 'seq' + scene_id + '_01/'
 
-    #camera_dir = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene01_AND_PLACES/database/cutouts/"
-    save_vid(camera_dir, sequence_num)
-    #save_vid_rendered(camera_dir)
+    # save_vid_from_downloads_folder_given_seq_no(camera_dir, sequence_num)
+
+    folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene01_AND_PLACES/database/cutouts/"
+    save_vid_from_rgb_imgs_given_any_folder_path(folder_path)
