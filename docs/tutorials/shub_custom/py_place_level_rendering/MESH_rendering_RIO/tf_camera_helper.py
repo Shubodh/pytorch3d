@@ -18,6 +18,22 @@ def convert_w_t_c(RT_ctow):
     RT_wtoc[3,3] = 1
     return RT_wtoc
 
+def moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5):
+    """ 
+    Basically, tf "current pose" by 0.5 m backward in egocentric view and return that new pose.
+    "Current pose" is extrinsics in camera projection terminology, RT_wtoc.
+    x = K [R t]_wtoc X_w = K X_c; where X_c = RT_wtoc @ X_w.
+    RIO10 local frame convention: Z forward, X right, Y below.
+    Now what we want to apply camera projection over X_c_new where 
+    X_c_new = T_mb @ X_c; T_mb's R = [I] and t = [0, 0, +0.5], basically I want to see points 0.5m behind me also, so I will move them in front of me.
+    X_c_new = T_mb @ RT_wtoc @ X_w. Therefore, new extrinsics would now be:
+    RT_wtoc_new = T_mb @ RT_wtoc
+    """
+    T_mb = np.eye(4,4)
+    T_mb[2,3] = moveback_distance
+    RT_wtoc_new = T_mb @ RT_wtoc
+    return RT_wtoc_new 
+
 class camera_params(object):
     """docstring for camera_params"""
     def __init__(self, camera_dir):

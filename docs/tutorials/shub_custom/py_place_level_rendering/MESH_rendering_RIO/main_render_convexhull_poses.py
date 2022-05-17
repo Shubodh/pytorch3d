@@ -47,7 +47,7 @@ from pytorch3d.utils import cameras_from_opencv_projection
 
 # Custom utils functions
 from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
-from tf_camera_helper import convert_w_t_c, camera_params
+from tf_camera_helper import convert_w_t_c, camera_params, moveback_tf_simple_given_pose
 from places_creation import all_coords_from_mesh, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
 from io_helper import write_individual_pose_txt_in_RIO_format
@@ -71,6 +71,13 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
         os.makedirs(dest_dir)
 
     for i, RT_ctow in enumerate(RT_list):
+        print("debug RT_moveback")
+        RT_wtoc = convert_w_t_c(RT_ctow)
+        RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5)
+        RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
+        print(RT_wtoc, "\n", RT_wtoc_mb)
+        print(RT_ctow, "\n", RT_ctow_mb)
+        sys.exit()
         # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
         param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
         #dest_file = 'places-' + '{:06d}'.format(i)
@@ -161,7 +168,7 @@ if __name__ == '__main__':
     else:
         device = torch.device("cpu")
 
-    viz_pcd = False
+    viz_pcd = False # viz_pcd doesn't have anything to do with visualization (use main_viz_.. for that).
     # final_poses = poses_for_places(viz_pcd, True)
     #scene_id = "01" # "02" #"01"
     scene_id = args.scene_id
