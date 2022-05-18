@@ -133,7 +133,8 @@ if __name__ == '__main__':
     parser.add_argument('--scene_id', type=str, required=True) # 01 or 02 etc
     parser.add_argument('--on_ada', type=str, required=True,choices=['ada', 'shub_local', 'aryan_local'], help ='where running code') 
     parser.add_argument('--ref_or_query', type=str, required=True,choices=['ref', 'query'], help ='save ref vids or query') 
-    parser.add_argument('--places_analysis', dest='places_analysis', default=False, action='store_true') # Just provide "--save_rendered_vid" on command line if you want to save rendered vid. Don't set it to anything if you want to save normal original vids.
+    parser.add_argument('--places_analysis', dest='places_analysis', default=False, action='store_true') # Just provide (next line)
+    # provide "--places_analysis" on command line if you want to do depth analysis for places. Don't set it to anything for original.
     args = parser.parse_args()
 
 
@@ -169,7 +170,9 @@ if __name__ == '__main__':
         folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" +  scene_id + "_A-queryAND-ND_PLACES/query/"
 
     if places_analysis_bool:
+        print("depth analysis for places rendered images")
         depth_analysis_for_places(folder_path)
     else:
+        print("depth analysis for normal images")
         depth_analysis(camera_dir, sequence_num)
     # print("What about depth analysis for places, aka, rendered images?")
