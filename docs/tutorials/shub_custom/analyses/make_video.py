@@ -41,6 +41,15 @@ def save_vid_from_downloads_folder_given_seq_no(camera_dir, sequence_num, fps=10
     for image in tqdm(images_files):
         if count%interval == 0:
             img = cv2.imread(image)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            p_img = Path(image)
+            #text = str(Path(*p_img.parts[-2:]))
+            text1 = str(Path(*p_img.parts[-2:-1]))
+            text2 = str(Path(*p_img.parts[-1:]))
+            cv2.putText(img, text1, (0, 50), font, 0.9, (255, 0, 0), 2)
+            cv2.putText(img, text2, (0, 100), font, 0.9, (255, 0, 0), 2)
+
             video.write(img)
 
         count += 1
@@ -82,6 +91,15 @@ def save_vid_from_rgb_imgs_given_any_folder_path(folder_path, save_rendered_vid,
     for image in tqdm(rgb_files):
         if count%interval == 0:
             img = cv2.imread(str(image))
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            p_img = Path(image)
+            #text = str(Path(*p_img.parts[-2:]))
+            text1 = str(Path(*p_img.parts[-2:-1]))
+            text2 = str(Path(*p_img.parts[-1:]))
+            cv2.putText(img, text1, (0, 50), font, 0.9, (255, 0, 0), 2)
+            cv2.putText(img, text2, (0, 100), font, 0.9, (255, 0, 0), 2)
+
             video.write(img)
 
         count += 1
@@ -99,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('--scene_id', type=str, required=True) # 01 or 02 etc
     parser.add_argument('--on_ada', type=str, required=True,choices=['ada', 'shub_local', 'aryan_local'], help ='where running code') 
     parser.add_argument('--ref_or_query', type=str, required=True,choices=['ref', 'query'], help ='save ref vids or query') 
-    parser.add_argument('--save_rendered_vid', dest='save_rendered_vid', default=False, action='store_true') # Just provide "--save_rendered_vid" on command line if you want to save rendered vid. Don't set it to anything if you want to save normal original vids.
+    parser.add_argument('--save_rendered_vid', dest='save_rendered_vid', default=False, action='store_true', help = 'Just provide --save_rendered_vid on command line if you want to save rendered vid. Dont set it to anything if you want to save normal original vids.')
     args = parser.parse_args()
 
     # final_poses = poses_for_places(viz_pcd, True)
@@ -129,10 +147,18 @@ if __name__ == '__main__':
     # MAKE SURE IT IS SAVE WITHOUT '/'
     if ref_or_query == "ref":
         sequence_num = 'seq' + scene_id + '_01/'
-        folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" +  scene_id + "_A-queryAND-ND_PLACES/database/cutouts/"
+        print("TODO-Later/NOTE: Here, folder_paths are different for rendered and original. Ideally both need to be in same InLoc_like_RIO10/ folder to ensure you're actually recording the ones which you are testing. i.e. copying from rendered_images_all_scenes to InLoc_like_RIO10 is remaining.")
+        if save_rendered_vid:
+            folder_path = "/scratch/saishubodh/rendered_images_all_scenes/scene" +  scene_id + "_rendered_images_ref/"
+        else:
+            folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" +  scene_id + "_A-queryAND-ND_PLACES/database/cutouts/"
     elif ref_or_query == "query":
         sequence_num = 'seq' + scene_id + '_02/'
-        folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" +  scene_id + "_A-queryAND-ND_PLACES/query/"
+        print("TODO-Later/NOTE: Here, folder_paths are different for rendered and original. Ideally both need to be in same InLoc_like_RIO10/ folder to ensure you're actually recording the ones which you are testing. i.e. copying from rendered_images_all_scenes to InLoc_like_RIO10 is remaining.")
+        if save_rendered_vid:
+            folder_path = "/scratch/saishubodh/rendered_images_all_scenes/scene" +  scene_id + "_rendered_images_query/"
+        else:
+            folder_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" +  scene_id + "_A-queryAND-ND_PLACES/query/"
 
 
     if save_rendered_vid:

@@ -71,17 +71,23 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
         os.makedirs(dest_dir)
 
     for i, RT_ctow in enumerate(RT_list):
-        print("debug RT_moveback")
-        RT_wtoc = convert_w_t_c(RT_ctow)
-        RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5)
-        RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
-        print(RT_wtoc, "\n", RT_wtoc_mb)
-        print(RT_ctow, "\n", RT_ctow_mb)
-        sys.exit()
+        mb_bool = False
+        if mb_bool:
+            # a. moveback code
+            RT_wtoc = convert_w_t_c(RT_ctow)
+            moveback_dist = 0.0
+            RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=moveback_dist)
+            RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
+
+            # b. moveback code
+            print(f"debug RT_moveback: {i}")
+            param.extrinsic = convert_w_t_c(RT_ctow_mb) # RT is RT_ctow, so this converts it to wtoc
+            dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i) + '_' + str(moveback_dist)  
+        else:
         # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
-        param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
-        #dest_file = 'places-' + '{:06d}'.format(i)
-        dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i)
+            param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
+            dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i)
+
         dest_file_prefix = os.path.join(dest_dir, dest_file)
         print(f"\n{dest_file_prefix}")
 
@@ -91,6 +97,9 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
         # param.extrinsic is wtoc
         write_individual_pose_txt_in_RIO_format(RT_ctow, dest_file_prefix)
         render_py3d_img_and_depth(i, img_size, param, dest_file_prefix, mesh_dir, device)
+        if i == 6 and mb_bool:
+            print("sysexit")
+            sys.exit()
 
         
 #def synth_image(viz_pcd=False, custom_dir=False, device=None):
