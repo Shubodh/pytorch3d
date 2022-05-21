@@ -1,14 +1,15 @@
-import numpy as np
-import open3d as o3d
-import json
-from scipy.io import loadmat
-import sys
 import os
-import cv2
-from pathlib import Path
 import matplotlib.pyplot as plt
+from pathlib import Path
+import numpy as np
+from scipy.io import loadmat
+import json
+import sys
 import matplotlib.image as mpimg
 import yaml
+import open3d as o3d
+import copy
+import argparse
 
 import torch
 import torch.nn.functional as F
@@ -44,339 +45,134 @@ from pytorch3d.renderer import (
 
 from pytorch3d.utils import cameras_from_opencv_projection
 
-from parsers import parse_camera_file_RIO, parse_pose_file_RIO
-#from old_code.output_places_poses_RIO_convex_hull import poses_for_places
+# Custom utils functions
+from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
+from tf_camera_helper import convert_w_t_c, camera_params, moveback_tf_simple_given_pose
+from places_creation import all_coords_from_mesh, create_list_of_rts_for_all_places
+from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
+from io_helper import write_individual_pose_txt_in_RIO_format
 
-#New custom utils functions
-from pytorch3d_utils import RtK_in_torch_format, lights_given_position
+#def viz_image(RT_list, camera, dest_dir, mesh_dir, device):
+def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_dir, device):
+    """
+    Render images based on RT_list
+    """
+    model = camera.model
+    img_size = camera.img_size
+    param = o3d.camera.PinholeCameraParameters()
+    param.intrinsic.set_intrinsics(width = img_size[1],
+                                                height = img_size[0],
+                                                fx = model[0],
+                                                fy = model[1],
+                                                cx = model[2],
+                                                cy = model[3])
 
-def main(img_ids, save_imgs):
-    #MOVED THIS to render_py3d_img in pytorch3d_utils.py. 
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
+
+    for i, RT_ctow in enumerate(RT_list):
+        print("debug RT_moveback")
+        RT_wtoc = convert_w_t_c(RT_ctow)
+        RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5)
+        RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
+        print(RT_wtoc, "\n", RT_wtoc_mb)
+        print(RT_ctow, "\n", RT_ctow_mb)
+        sys.exit()
+        # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
+        param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
+        #dest_file = 'places-' + '{:06d}'.format(i)
+        dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i)
+        dest_file_prefix = os.path.join(dest_dir, dest_file)
+        print(f"\n{dest_file_prefix}")
+
+        # print(param.extrinsic, param.intrinsic.intrinsic_matrix, dest_file)
+        # render_py3d_img(i, img_size, param, dest_file, mesh_dir, device)
+
+        # param.extrinsic is wtoc
+        write_individual_pose_txt_in_RIO_format(RT_ctow, dest_file_prefix)
+        render_py3d_img_and_depth(i, img_size, param, dest_file_prefix, mesh_dir, device)
+
+        
+#def synth_image(viz_pcd=False, custom_dir=False, device=None):
+def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, custom_dir=False, device=None):
+    #Reading data paths
+    #mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
+    #camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
+    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
+   
+    ada = not viz_pcd
+    if ada==True:
+        #mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
+        #camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
+        mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
+
+    if custom_dir:
+        #mesh_dir = "../../../../../scene01/models01/"
+        #camera_dir = "../../../../../scene01/seq01/"
+        mesh_dir = "../../../../../scene" + scene_id + "/models" + scene_id + "/"
+        camera_dir = "../../../../../scene" + scene_id + "/seq" + scene_id + "/"
+
+    #To edit:
+    #Sequence number and where visualisations are saved:
+    #sequence_num = 'seq01_01/'
+    if ref_not_query:
+        sequence_num = 'seq' + scene_id + '_01/'
+    else:
+        sequence_num = 'seq' + scene_id + '_02/'
+    #dest_dir = "temp_dir"
+    dest_dir = str(output_path)
+
+    mesh_dir = os.path.join(mesh_dir, sequence_num)
+    camera_dir = os.path.join(camera_dir, sequence_num)
+
+    mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
+    
+    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh, ref_not_query)
+
+    #Set Camera parameters
+    camera = camera_params(camera_dir)
+    camera.set_intrinsics()
+    print(device)
+    
+    for fix_up_coord in fix_up_coord_list:
+        # print(f"Fixing up coord as {fix_up_coord}")
+
+        centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
+
+        list_of_rts = create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_center_coords, linspace_num)
+        # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
+        render_all_imgs_from_RT_list(fix_up_coord, list_of_rts, camera, dest_dir, mesh_dir, device)
+
+
+if __name__ == '__main__':
+    """
+    z - blue
+    x - red
+    y - green
+
+    z - look at
+    y - down
+    x - cross
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scene_id', type=str, required=True)
+    parser.add_argument('--output_path', type=Path, required=True)
+    parser.add_argument('--ref_or_query', type=str, required=True) #If reference, do "--ref_or_query ref". If query, anything else.
+    args = parser.parse_args()
+    
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.cuda.set_device(device)
     else:
         device = torch.device("cpu")
 
-    #change file num: 
-    #added format code, so just
-    #integer format
+    viz_pcd = False # viz_pcd doesn't have anything to do with visualization (use main_viz_.. for that).
+    # final_poses = poses_for_places(viz_pcd, True)
+    #scene_id = "01" # "02" #"01"
+    scene_id = args.scene_id
+    ref_not_query = args.ref_or_query
+    ref_not_query = (ref_not_query=="ref")
+    render_places_main(ref_not_query, args.output_path, scene_id, viz_pcd, False, device)
 
-    # seq01_XX = ["01", "02"]
-    seq01_XX = ["01"]
-    for seq_id in seq01_XX:
-        for num in img_ids:
-
-            pose_file_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/seq01_" + seq_id +"/"
-            camera_file = os.path.join(pose_file_dir, 'camera.yaml')
-
-            camera_file = 'camera.yaml'
-            pose_file = 'frame-{:06d}.pose.txt'.format(num)
-            rgb_file = 'frame-{:06d}.color.jpg'.format(num)
-
-            camera_file = os.path.join(pose_file_dir, camera_file)
-            pose_file = os.path.join(pose_file_dir, pose_file)
-            rgb_file = os.path.join(pose_file_dir, rgb_file)
-
-            print(camera_file, os.path.isfile(camera_file))
-            print(pose_file, os.path.isfile(pose_file))
-            print(rgb_file, os.path.isfile(rgb_file))
-            img = plt.imread(rgb_file)
-            # plt.imshow(img)
-            # plt.show()
-
-            o3d_param, K, img_size =  parse_camera_file_RIO(camera_file)
-            o3d_param, RT, RT_ctow = parse_pose_file_RIO(pose_file, o3d_param)
-            RT_wtoc = RT
-
-            print(f"H & W: {img_size}, \n K:\n{K}, \n tf w to c:\n{RT} \n tf c to w:\n{RT_ctow} ")
-
-            mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
-
-            #render_py3d_img(img_size, param, dest_file, mesh_dir, device)
-
-            mesh_obj_file = os.path.join(mesh_dir ,"mesh.obj")
-            print("Testing IO for meshes ...")
-            mesh = load_objs_as_meshes([mesh_obj_file], device=device)
-            print("Mesh loading done !!!")
-
-            texture_image=mesh.textures.maps_padded()
-            # plt.figure(figsize=(7,7))
-            # plt.imshow(texture_image.squeeze().cpu().numpy())
-            # plt.show()
-
-
-            RR, tt, KK, img_size_t = RtK_in_torch_format(K, RT, img_size)
-
-            cameras_pytorch3d = cameras_from_opencv_projection(RR.float(), tt.float(), KK.float(), img_size_t.float())
-            # above line was giving dtype errors, so made everything float..
-            cameras_pytorch3d  = cameras_pytorch3d.to(device)
-            # (img_size_t.float().dtype, RR.dtype)
-            raster_settings = RasterizationSettings(
-                image_size=img_size, 
-                blur_radius=0.0, 
-                faces_per_pixel=1, 
-            )
-
-            lights = lights_given_position(RT_ctow[0:3, 3], device)
-            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
-
-            renderer = MeshRenderer(
-                rasterizer=MeshRasterizer(
-                    cameras=cameras_pytorch3d, 
-                    raster_settings=raster_settings
-                ),
-                shader=SoftPhongShader(
-                    device=device,
-                    cameras=cameras_pytorch3d,
-                    lights=lights
-                )
-            )
-
-            rendered_images = renderer(mesh)
-            # plt.imshow(rendered_images[0, ..., :3].cpu().numpy())
-            # plt.show()
-            
-            given_img = plt.imread(rgb_file)
-            fig, (ax1, ax2) = plt.subplots(1, 2)
-            ax1.imshow(given_img)
-            ax2.imshow(rendered_images[0, ..., :3].cpu().numpy())
-
-            img_type = "_true-pose-ctow"
-            # img_type = "_random-pose-wtoc"
-            if save_imgs:
-                plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
-                print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
-            plt.show()
-
-def main_depth(img_ids, save_imgs):
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-        torch.cuda.set_device(device)
-    else:
-        device = torch.device("cpu")
-
-    #change file num: 
-    #added format code, so just
-    #integer format
-
-    # seq01_XX = ["01", "02"]
-    seq01_XX = ["01"]
-    for seq_id in seq01_XX:
-        for num in img_ids:
-
-            pose_file_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/seq01_" + seq_id +"/"
-            camera_file = os.path.join(pose_file_dir, 'camera.yaml')
-
-            camera_file = 'camera.yaml'
-            pose_file = 'frame-{:06d}.pose.txt'.format(num)
-            rgb_file = 'frame-{:06d}.color.jpg'.format(num)
-
-            camera_file = os.path.join(pose_file_dir, camera_file)
-            pose_file = os.path.join(pose_file_dir, pose_file)
-            rgb_file = os.path.join(pose_file_dir, rgb_file)
-
-            print(camera_file, os.path.isfile(camera_file))
-            print(pose_file, os.path.isfile(pose_file))
-            print(rgb_file, os.path.isfile(rgb_file))
-            img = plt.imread(rgb_file)
-            # plt.imshow(img)
-            # plt.show()
-
-            o3d_param, K, img_size =  parse_camera_file_RIO(camera_file)
-            o3d_param, RT, RT_ctow = parse_pose_file_RIO(pose_file, o3d_param)
-            RT_wtoc = RT
-
-            print(f"H & W: {img_size}, \n K:\n{K}, \n tf w to c:\n{RT} \n tf c to w:\n{RT_ctow} ")
-
-            mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
-            mesh_obj_file = os.path.join(mesh_dir ,"mesh.obj")
-            print("Testing IO for meshes ...")
-            mesh = load_objs_as_meshes([mesh_obj_file], device=device)
-            print("Mesh loading done !!!")
-
-            texture_image=mesh.textures.maps_padded()
-            # plt.figure(figsize=(7,7))
-            # plt.imshow(texture_image.squeeze().cpu().numpy())
-            # plt.show()
-
-
-            RR, tt, KK, img_size_t = RtK_in_torch_format(K, RT, img_size)
-
-            cameras_pytorch3d = cameras_from_opencv_projection(RR.float(), tt.float(), KK.float(), img_size_t.float())
-            # above line was giving dtype errors, so made everything float..
-            cameras_pytorch3d  = cameras_pytorch3d.to(device)
-            # (img_size_t.float().dtype, RR.dtype)
-            raster_settings = RasterizationSettings(
-                image_size=img_size, 
-                blur_radius=0.0, 
-                faces_per_pixel=1, 
-            )
-
-            lights = lights_given_position(RT_ctow[0:3, 3], device)
-            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
-            rasterizer=MeshRasterizer(
-                    cameras=cameras_pytorch3d, 
-                    raster_settings=raster_settings
-            )
-            renderer = MeshRenderer(
-                rasterizer=rasterizer,
-                shader=SoftPhongShader(
-                    device=device,
-                    cameras=cameras_pytorch3d,
-                    lights=lights
-                )
-            )
-            print("Test")
-
-
-            rendered_images = renderer(mesh)
-
-
-            #DEPTH EXPERIMENT
-            fragments = rasterizer(mesh)
-            depth_info = fragments.zbuf
-            """
-            fragments.zbuf is a (N, H, W, K) dimensional tensor
-            #top k points. We'll take top 1
-            source: https://github.com/facebookresearch/pytorch3d/issues/35#issuecomment-583870676
-            """
-            depth_image = depth_info[0,...,0]
-
-
-
-
-            # plt.imshow(rendered_images[0, ..., :3].cpu().numpy())
-            # plt.show()
-            
-            given_img = plt.imread(rgb_file)
-            fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-            ax1.imshow(given_img)
-            ax2.imshow(rendered_images[0, ..., :3].cpu().numpy())
-            ax3.imshow(depth_info[0,...,0].cpu().numpy())
-
-
-            #img_type = "_true-pose-ctow"
-            img_type = "depth_stuff_ctow"
-            # img_type = "depth_stuff_wtoc"
-            if save_imgs:
-                plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
-                print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
-            #plt.show()
-
-
-
-def main_given_poses(given_poses, save_imgs):
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-        torch.cuda.set_device(device)
-    else:
-        device = torch.device("cpu")
-
-    #change file num: 
-    #added format code, so just
-    #integer format
-
-    # seq01_XX = ["01", "02"]
-    seq01_XX = ["01"]
-    for seq_id in seq01_XX:
-        for pose_tf in given_poses: #for num in img_ids
-
-            pose_file_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/seq01_" + seq_id +"/"
-            camera_file = os.path.join(pose_file_dir, 'camera.yaml')
-
-            camera_file = 'camera.yaml'
-            # pose_file = 'frame-{:06d}.pose.txt'.format(num)
-            # rgb_file = 'frame-{:06d}.color.jpg'.format(num)
-
-            camera_file = os.path.join(pose_file_dir, camera_file)
-            # pose_file = os.path.join(pose_file_dir, pose_file)
-            # rgb_file = os.path.join(pose_file_dir, rgb_file)
-
-            print(camera_file, os.path.isfile(camera_file))
-            # print(pose_file, os.path.isfile(pose_file))
-            # print(rgb_file, os.path.isfile(rgb_file))
-            # img = plt.imread(rgb_file)
-            # plt.imshow(img)
-            # plt.show()
-
-            o3d_param, K, img_size =  parse_camera_file_RIO(camera_file)
-            # o3d_param, RT, RT_ctow = parse_pose_file_RIO(pose_file, o3d_param)
-            RT = pose_tf
-            RT_ctow = np.zeros((4,4))
-            RT_wtoc = RT
-
-            print(f"H & W: {img_size}, \n K:\n{K}, \n tf w to c:\n{RT} \n tf c to w:\n{RT_ctow} ")
-
-            mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/seq01_01/"
-            mesh_obj_file = os.path.join(mesh_dir ,"mesh.obj")
-            print("Testing IO for meshes ...")
-            mesh = load_objs_as_meshes([mesh_obj_file], device=device)
-            print("Mesh loading done !!!")
-
-            texture_image=mesh.textures.maps_padded()
-            # plt.figure(figsize=(7,7))
-            # plt.imshow(texture_image.squeeze().cpu().numpy())
-            # plt.show()
-
-
-            RR, tt, KK, img_size_t = RtK_in_torch_format(K, RT, img_size)
-
-            cameras_pytorch3d = cameras_from_opencv_projection(RR.float(), tt.float(), KK.float(), img_size_t.float())
-            # above line was giving dtype errors, so made everything float..
-            cameras_pytorch3d  = cameras_pytorch3d.to(device)
-            # (img_size_t.float().dtype, RR.dtype)
-            raster_settings = RasterizationSettings(
-                image_size=img_size, 
-                blur_radius=0.0, 
-                faces_per_pixel=1, 
-            )
-
-            lights = lights_given_position(RT_ctow[0:3, 3], device)
-            # lights = lights_given_position(RT_wtoc[0:3, 3], device)
-
-            renderer = MeshRenderer(
-                rasterizer=MeshRasterizer(
-                    cameras=cameras_pytorch3d, 
-                    raster_settings=raster_settings
-                ),
-                shader=SoftPhongShader(
-                    device=device,
-                    cameras=cameras_pytorch3d,
-                    lights=lights
-                )
-            )
-
-            rendered_images = renderer(mesh)
-            plt.imshow(rendered_images[0, ..., :3].cpu().numpy())
-            plt.show()
-            
-            # given_img = plt.imread(rgb_file)
-            # fig, (ax1, ax2) = plt.subplots(1, 2)
-            # ax1.imshow(given_img)
-            # ax2.imshow(rendered_images[0, ..., :3].cpu().numpy())
-
-            img_type = "_true-pose-ctow"
-            # img_type = "_random-pose-wtoc"
-            if save_imgs:
-                plt.savefig("outputs/" + seq_id + "_" + str(num) + img_type + ".png")
-                print(f"img saved to outputs/{seq_id + str(num)+ img_type}.png")
-            plt.show()
-
-
-if __name__=='__main__':
-    # img_ids = [131, 1992, 3530, 3622]
-    img_ids = [131]
-    save_imgs = True
-    # given_poses = poses_for_places()
-    # print(given_poses)
-
-    # 1. Rendering images for given reference poses.
-    # TODO-Later: Rewrite main() and main_depth() by importing rendering functions from pytorch3d_utils.py
-    # instead of having entire code in current file.
-    main(img_ids, save_imgs)
-    main_depth(img_ids, save_imgs)
-
-    # 2. Rendering images for convex hull poses. But 
-    # but this is random, not written well. Use main_RIO_place_level_MESH_rendering_for_convexhull_poses.py
-    #main_given_poses(given_poses, save_imgs)
