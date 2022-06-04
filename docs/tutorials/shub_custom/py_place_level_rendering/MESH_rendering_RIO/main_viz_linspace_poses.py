@@ -109,6 +109,7 @@ def viz_linspace_poses(centroids_coordinates, sphere_center_coords, fix_up_coord
 
     sphere_center = o3dsphere_from_coords(sphere_center_coords, color=[0, 0.706, 0], radius = 0.1)
     poses_list.append(sphere_center)
+    print(f"Total number of RT's roughly (+2/3) are {len(poses_list)}")
     if viz_pcd:
         o3d.visualization.draw_geometries(poses_list)
 
@@ -176,6 +177,6 @@ if __name__ == '__main__':
     ref_not_query = args.ref_or_query
     ref_not_query = (ref_not_query=="ref")
 
-    if ref_not_query:
-        main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False, points_viz=points_viz)
+    # if ref_not_query:
+    #     main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False, points_viz=points_viz)
     main_linspace_poses(ref_not_query, scene_id, viz_pcd=viz_pcd, custom_dir=False, points_viz=False)

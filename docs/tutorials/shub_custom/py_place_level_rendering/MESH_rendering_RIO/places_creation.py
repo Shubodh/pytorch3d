@@ -7,6 +7,8 @@ from scipy.spatial import Delaunay
 
 from numpy.linalg import det, norm
 
+from tf_camera_helper import move_rotate_leftright_tf_simple_given_pose_in_ctow
+
 # def rt_given_lookat(lookat,location):
 def rt_given_lookat_planar(lookat,location):
     """
@@ -100,12 +102,21 @@ def create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_ce
         # print(sample_poses, "\n", sample_poses_except_sphere, "\n", sample_poses_except_hull_pt, "\n")
         for i_coord in range(sample_poses_except_sphere.shape[0]):
 
-            # 2. A: lookat sphere_center from sampled point
+            # 2. A: lookat (room center) sphere_center from *sampled point* (TOWARDS room center) (Both A. and B. are from sampled point only)
+            towards_room_center = rt_given_lookat(sphere_center_coords, sample_poses_except_sphere[i_coord])
+            towards_room_CORNER = rt_given_lookat(centroids_coordinates[hull_point], sample_poses_except_hull_pt[i_coord])
+
             if in_hull(sample_poses_except_sphere[i_coord], pcd_pts):
-                list_of_rts.append(rt_given_lookat(sphere_center_coords, sample_poses_except_sphere[i_coord]))
-            # 2. B: lookat sampled point from  sphere_center
+                list_of_rts.append(towards_room_center)
+                # 2. A. i. and ii. See left and right.
+                # assert that their poses's positions are same. Remember, poses are CTOW, not WTOC; that's why inv.
+                assert np.all(np.isclose(move_rotate_leftright_tf_simple_given_pose_in_ctow(towards_room_center, "left")[:,3], towards_room_center[:,3]))
+                assert np.all(np.isclose(move_rotate_leftright_tf_simple_given_pose_in_ctow(towards_room_center, "right")[:,3], towards_room_center[:,3]))
+                list_of_rts.append(move_rotate_leftright_tf_simple_given_pose_in_ctow(towards_room_center, rotate_left_or_right="left"))
+                list_of_rts.append(move_rotate_leftright_tf_simple_given_pose_in_ctow(towards_room_center, rotate_left_or_right="right"))
+            # 2. B: lookat room corners from *sampled point* (TOWARDS convex hull points, i.e. room corners)
             if in_hull(sample_poses_except_hull_pt[i_coord], pcd_pts):
-                list_of_rts.append(rt_given_lookat(centroids_coordinates[hull_point], sample_poses_except_hull_pt[i_coord]))
+                list_of_rts.append(towards_room_CORNER)
 
             # OLD: Without checking if the point is in_hull
             # list_of_rts.append(rt_given_lookat(sphere_center_coords, sample_poses_except_sphere[i_coord]))
@@ -190,14 +201,12 @@ def all_coords_from_mesh(mesh, ref_not_query):
     # fix_up_coord_list = [-0.5] #0.5, 1, 1.5, 2, 2.5
     # fix_up_coord_list = [-0.5, 0, 0.5, 1, 1.5, 2, 2.5]
     if ref_not_query:
-        linspace_num_across_room_height = 7 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
-        linspace_num_across_ray = 5
+        linspace_num_across_room_height = 5 # 7# np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
+        linspace_num_across_ray = 4 #5
     else: 
         print("should change sampling later for QUERY")
-        linspace_num_across_room_height = 7 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
-        linspace_num_across_ray = 5
-        # linspace_num_across_room_height = 4
-        # linspace_num_across_ray = 2
+        linspace_num_across_room_height = 5 # np.min - 1.0 below because it has to look at floor. Visualize it, the ray has to pass through the floor.
+        linspace_num_across_ray = 4
 
 
 

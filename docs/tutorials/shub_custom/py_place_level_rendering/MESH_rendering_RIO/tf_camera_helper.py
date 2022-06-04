@@ -2,6 +2,8 @@ import numpy as np
 import os
 import yaml
 
+from scipy.spatial.transform import Rotation as R
+import sys
 
 def convert_w_t_c(RT_ctow):
     """
@@ -28,11 +30,79 @@ def moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5):
     X_c_new = T_mb @ X_c; T_mb's R = [I] and t = [0, 0, +0.5], basically I want to see points 0.5m behind me also, so I will move them in front of me.
     X_c_new = T_mb @ RT_wtoc @ X_w. Therefore, new extrinsics would now be:
     RT_wtoc_new = T_mb @ RT_wtoc
+    NOTE: DO remember X_c should be full point cloud, not trimmed point cloud.
     """
     T_mb = np.eye(4,4)
     T_mb[2,3] = moveback_distance
     RT_wtoc_new = T_mb @ RT_wtoc
     return RT_wtoc_new 
+
+def move_rotate_leftright_tf_simple_given_pose(RT_wtoc, rotate_left_or_right="left"):
+    """ 
+    Basically, tf "current pose" by rotating L or R in egocentric view and return that new pose in global frame.
+    "Current pose" is extrinsics in camera projection terminology, RT_wtoc.
+    x = K [R t]_wtoc X_w = K X_c; where X_c = RT_wtoc @ X_w.
+    RIO10 local frame convention: Z forward, X right, Y below.
+    Now what we want to apply camera projection over X_c_new where 
+    X_c_new = T_mb @ X_c; T_mb's R = [R(theta)] and t = [0, 0, 0], 
+
+    R(theta) -- If turning left: Remember y-axis is facing below
+        I will rotate points 90 deg such that left point are in front of me,
+        So, [R.from_euler('y', 90..) @ X_c] will rotate points rightwards such that left point are in front. (Rotator-transform equivalence: 1. Vector or operator)
+
+    X_c_new = T_mb @ RT_wtoc @ X_w. Therefore, new extrinsics would now be:
+    RT_wtoc_new = T_mb @ RT_wtoc
+    NOTE: DO remember X_c should be full point cloud, not trimmed point cloud.
+    """
+    R_left_obj = R.from_euler('y', 90, degrees=True) 
+    R_left = R_left_obj.as_matrix() #should be [[0,0,1],[0,1,0],[-1,0,0]]
+    R_right_obj = R.from_euler('y', -90, degrees=True)
+    R_right = R_right_obj.as_matrix()
+
+    T_mb = np.eye(4,4)
+    if rotate_left_or_right == "left":
+        T_mb[:3, :3] = R_left
+    elif rotate_left_or_right == "right":
+        T_mb[:3, :3] = R_right
+    else:
+        raise ValueError(f'Wrong argument {rotate_left_or_right}, should be left or right')
+
+    RT_wtoc_new = T_mb @ RT_wtoc
+    return RT_wtoc_new 
+
+def move_rotate_leftright_tf_simple_given_pose_in_ctow(RT_ctow, rotate_left_or_right="left"):
+    """ 
+    Basically, tf "current pose" by rotating L or R in egocentric view and return that new pose in global frame.
+    "Current pose" is extrinsics in camera projection terminology, RT_wtoc.
+    x = K [R t]_wtoc X_w = K X_c; where X_c = RT_wtoc @ X_w.
+    RIO10 local frame convention: Z forward, X right, Y below.
+    Now what we want to apply camera projection over X_c_new where 
+    X_c_new = T_mb @ X_c; T_mb's R = [R(theta)] and t = [0, 0, 0], 
+
+    R(theta) -- If turning left: Remember y-axis is facing below
+        I will rotate points 90 deg such that left point are in front of me,
+        So, [R.from_euler('y', 90..) @ X_c] will rotate points rightwards such that left point are in front. (Rotator-transform equivalence: 1. Vector or operator)
+
+    X_c_new = T_mb @ RT_wtoc @ X_w. Therefore, new extrinsics would now be:
+    RT_wtoc_new = T_mb @ RT_wtoc
+    NOTE: DO remember X_c should be full point cloud, not trimmed point cloud.
+    """
+    R_left_obj = R.from_euler('y', 90, degrees=True) 
+    R_left = R_left_obj.as_matrix() #should be [[0,0,1],[0,1,0],[-1,0,0]]
+    R_right_obj = R.from_euler('y', -90, degrees=True)
+    R_right = R_right_obj.as_matrix()
+
+    T_mb = np.eye(4,4)
+    if rotate_left_or_right == "left":
+        T_mb[:3, :3] = R_left
+    elif rotate_left_or_right == "right":
+        T_mb[:3, :3] = R_right
+    else:
+        raise ValueError(f'Wrong argument {rotate_left_or_right}, should be left or right')
+
+    RT_wtoc = np.linalg.inv(RT_ctow)
+    RT_wtoc_new = T_mb @ RT_wtoc
+    return np.linalg.inv(RT_wtoc_new)
 
 class camera_params(object):
     """docstring for camera_params"""
