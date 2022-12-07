@@ -188,8 +188,12 @@ def render_py3d_img_and_depth(img_id, img_size, param, dest_file_prefix, mesh_di
 
     rgb_save_path = Path(str(dest_file_prefix) + ".color.jpg")
 
-    plt.imsave(rgb_save_path, rgb_rendered_image)
-    print(f"Saved RGB rendered image at {rgb_save_path}")
+    try:
+        plt.imsave(rgb_save_path, rgb_rendered_image)
+        print(f"Saved RGB rendered image at {rgb_save_path}")
+    except ValueError:
+        pass
+        print(f"ValueError: cannot save {rgb_save_path}. \n   SOLUTION: Please copy original image directly externally through CLI. Of course it is not rendered image, but it's ok to copy original itself as this is a very very rare case: 1 in 10000 or so. \n   Also, after finding the error image, you can debug it from main code: see debug_valueerror")
 
     # 2. SAVING DEPTH IMAGE
     fragments = rasterizer(mesh)

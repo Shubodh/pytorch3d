@@ -50,10 +50,10 @@ from pytorch3d_utils import render_py3d_img, render_py3d_img_and_depth
 from tf_camera_helper import convert_w_t_c, camera_params, moveback_tf_simple_given_pose
 from places_creation import all_coords_from_mesh, create_list_of_rts_for_all_places
 from o3d_helper import o3dframe_from_coords, o3dsphere_from_coords
-from io_helper import write_individual_pose_txt_in_RIO_format
+from io_helper import write_individual_pose_txt_in_RIO_format, return_individual_pose_files_as_single_list
 
 #def viz_image(RT_list, camera, dest_dir, mesh_dir, device):
-def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_dir, device):
+def render_all_imgs_from_RT_list(RT_list, dict_name_pose, camera, dest_dir, mesh_dir, device):
     """
     Render images based on RT_list
     """
@@ -70,18 +70,21 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
     if not os.path.isdir(dest_dir):
         os.makedirs(dest_dir)
 
-    for i, RT_ctow in enumerate(RT_list):
-        print("debug RT_moveback")
-        RT_wtoc = convert_w_t_c(RT_ctow)
-        RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5)
-        RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
-        print(RT_wtoc, "\n", RT_wtoc_mb)
-        print(RT_ctow, "\n", RT_ctow_mb)
-        sys.exit()
+    #for i, RT_ctow in enumerate(RT_list):
+    for key, RT_ctow in dict_name_pose.items():
+        # print("debug RT_moveback")
+        # RT_wtoc = convert_w_t_c(RT_ctow)
+        # RT_wtoc_mb = moveback_tf_simple_given_pose(RT_wtoc, moveback_distance=0.5)
+        # RT_ctow_mb = convert_w_t_c(RT_wtoc_mb)
+        # print(RT_wtoc, "\n", RT_wtoc_mb)
+        # print(RT_ctow, "\n", RT_ctow_mb)
+        # sys.exit()
         # You're getting this RT_list from the rt_given_lookat function, meaning it is pose, i.e. ctow
         param.extrinsic = convert_w_t_c(RT_ctow) # RT is RT_ctow, so this converts it to wtoc
         #dest_file = 'places-' + '{:06d}'.format(i)
-        dest_file = 'places-'+ '{:04d}'.format(int(fix_up_coord * 100)) + '-' + '{:06d}'.format(i)
+        #print(key, RT_ctow)
+        dest_file = key
+        #dest_file = 'frame-rendered-'+ '{:06d}'.format(i)
         dest_file_prefix = os.path.join(dest_dir, dest_file)
         print(f"\n{dest_file_prefix}")
 
@@ -90,60 +93,62 @@ def render_all_imgs_from_RT_list(fix_up_coord, RT_list, camera, dest_dir, mesh_d
 
         # param.extrinsic is wtoc
         write_individual_pose_txt_in_RIO_format(RT_ctow, dest_file_prefix)
+        i=0
         render_py3d_img_and_depth(i, img_size, param, dest_file_prefix, mesh_dir, device)
 
         
 #def synth_image(viz_pcd=False, custom_dir=False, device=None):
-def render_places_main(ref_not_query, output_path, scene_id, viz_pcd=False, custom_dir=False, device=None):
-    #Reading data paths
-    #mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/models01/"
-    #camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene01/seq01/"
-    mesh_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
-    camera_dir = "/media/shubodh/DATA/Downloads/data-non-onedrive/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
-   
-    ada = not viz_pcd
-    if ada==True:
-        #mesh_dir = "/scratch/saishubodh/RIO10_data/scene01/models01/"
-        #camera_dir = "/scratch/saishubodh/RIO10_data/scene01/seq01/"
-        mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
-        camera_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
+def render_places_main(ref_not_query, scene_id, output_path=None,  device=None):
+    output_path = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" + scene_id + "_RRI_with_QRI/"
 
-    if custom_dir:
-        #mesh_dir = "../../../../../scene01/models01/"
-        #camera_dir = "../../../../../scene01/seq01/"
-        mesh_dir = "../../../../../scene" + scene_id + "/models" + scene_id + "/"
-        camera_dir = "../../../../../scene" + scene_id + "/seq" + scene_id + "/"
+    camera_dir = "/scratch/saishubodh/InLoc_like_RIO10/sampling10/scene" + scene_id + "_ROI_with_QOI/"
+    mesh_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/models" + scene_id + "/"
+    # camera_dir = "/scratch/saishubodh/RIO10_data/scene" + scene_id + "/seq" + scene_id + "/"
 
-    #To edit:
-    #Sequence number and where visualisations are saved:
-    #sequence_num = 'seq01_01/'
+
     if ref_not_query:
-        sequence_num = 'seq' + scene_id + '_01/'
+        sequence_num_mesh = 'seq' + scene_id + '_01/'
+        sequence_num_cam =  'database/cutouts/'
     else:
-        sequence_num = 'seq' + scene_id + '_02/'
-    #dest_dir = "temp_dir"
-    dest_dir = str(output_path)
+        sequence_num_mesh = 'seq' + scene_id + '_02/'
+        sequence_num_cam =  'query/'
 
-    mesh_dir = os.path.join(mesh_dir, sequence_num)
-    camera_dir = os.path.join(camera_dir, sequence_num)
+    dest_dir = str(output_path) + sequence_num_cam
+    Path(dest_dir).mkdir(parents=True, exist_ok=True)
+
+    mesh_dir = os.path.join(mesh_dir, sequence_num_mesh)
+    camera_dir = os.path.join(camera_dir, sequence_num_cam)
 
     mesh = o3d.io.read_triangle_mesh(os.path.join(mesh_dir, "mesh.obj"), True)
     
-    pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh, ref_not_query)
+    # pcd_hull, centroids_coordinates, sphere_center_coords, fix_up_coord_list, linspace_num = all_coords_from_mesh(mesh, ref_not_query)
 
     #Set Camera parameters
     camera = camera_params(camera_dir)
     camera.set_intrinsics()
     print(device)
     
-    for fix_up_coord in fix_up_coord_list:
-        # print(f"Fixing up coord as {fix_up_coord}")
+    # for fix_up_coord in fix_up_coord_list:
+    #     # print(f"Fixing up coord as {fix_up_coord}")
 
-        centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
+    #     centroids_coordinates[:,2] = np.ones((centroids_coordinates[:,2]).shape) * fix_up_coord
 
-        list_of_rts = create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_center_coords, linspace_num)
-        # list_of_rts = viz_points_cam(centroids_coordinates, sphere_center_coords, mesh, camera, dest_dir, mesh_dir,device)
-        render_all_imgs_from_RT_list(fix_up_coord, list_of_rts, camera, dest_dir, mesh_dir, device)
+    # list_of_rts = create_list_of_rts_for_all_places(pcd_hull, centroids_coordinates, sphere_center_coords, linspace_num)
+    list_of_rts, dict_name_pose = return_individual_pose_files_as_single_list(camera_dir, scene_id)
+
+    debug_valueerror =False #True #  
+
+    if not debug_valueerror:
+        render_all_imgs_from_RT_list(list_of_rts, dict_name_pose, camera, dest_dir, mesh_dir, device)
+
+    else:
+        print("DEBUGGING: ")
+        start, end = 6059, 6064 #6062, 6106 #6059, 6066  # 6059, 6062 #
+        new_list_of_rts = list_of_rts[start:end] 
+        new_dict_name_pose = {k: dict_name_pose[k] for k in sorted(dict_name_pose.keys())[start:end]}
+        #print(new_dict, "\n", new_list_of_rts)
+        #sys.exit()
+        render_all_imgs_from_RT_list(new_list_of_rts, new_dict_name_pose, camera, dest_dir, mesh_dir, device)
 
 
 if __name__ == '__main__':
@@ -158,7 +163,7 @@ if __name__ == '__main__':
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--scene_id', type=str, required=True)
-    parser.add_argument('--output_path', type=Path, required=True)
+    # parser.add_argument('--output_path', type=Path, required=True)
     parser.add_argument('--ref_or_query', type=str, required=True) #If reference, do "--ref_or_query ref". If query, anything else.
     args = parser.parse_args()
     
@@ -174,5 +179,5 @@ if __name__ == '__main__':
     scene_id = args.scene_id
     ref_not_query = args.ref_or_query
     ref_not_query = (ref_not_query=="ref")
-    render_places_main(ref_not_query, args.output_path, scene_id, viz_pcd, False, device)
+    render_places_main(ref_not_query=ref_not_query, scene_id=scene_id, device=device)
 

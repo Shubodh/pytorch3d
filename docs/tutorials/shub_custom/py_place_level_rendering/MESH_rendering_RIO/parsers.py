@@ -10,7 +10,7 @@ import yaml
 import copy
 import sys
 
-def parse_pose_file_RIO(pose_file, param):
+def parse_pose_file_RIO(pose_file, param=None):
     # NOTE: In RIO pose files, convention is: camera to world. Obviously, it is pose of a robot,
     # so obviously it has to be (a camera) in world frame.
     # We want world to camera as our points are in world coordinates.
@@ -35,7 +35,8 @@ def parse_pose_file_RIO(pose_file, param):
     # print(RT, RT_wtoc)
     RT_final = RT_wtoc
 
-    param.extrinsic = RT_final 
+    if param is not None:
+        param.extrinsic = RT_final 
     # print(param.extrinsic)
     return param, RT_final, RT_ctow
 
